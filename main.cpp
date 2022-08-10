@@ -63,57 +63,57 @@ void jsonp_test()
 
     string err_comment;
     auto json_comment = Json::parse(
-        comment_test, err_comment, JsonParseType::COMMENTS);
+        comment_test, err_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(!json_comment.is_null());
     JSON_TEST_ASSERT(err_comment.empty());
     JSON_TEST_ASSERT(json_comment["c"][1].int_value() == 2);
 
     comment_test = "{\"a\": 1}//trailing line comment";
     json_comment = Json::parse(
-        comment_test, err_comment, JsonParseType::COMMENTS);
+        comment_test, err_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(!json_comment.is_null());
     JSON_TEST_ASSERT(err_comment.empty());
 
     comment_test = "{\"a\": 1}/*trailing multi-line comment*/";
     json_comment = Json::parse(
-        comment_test, err_comment, JsonParseType::COMMENTS);
+        comment_test, err_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(!json_comment.is_null());
     JSON_TEST_ASSERT(err_comment.empty());
 
     string failing_comment_test = "{\n/* unterminated comment\n\"a\": 1,\n}";
     string err_failing_comment;
     auto json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::COMMENTS);
+        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{\n/* unterminated trailing comment }";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::COMMENTS);
+        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{\n/ / bad comment }";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::COMMENTS);
+        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{// bad comment }";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::COMMENTS);
+        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{\n\"a\": 1\n}/";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::COMMENTS);
+        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{/* bad\ncomment *}";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::COMMENTS);
+        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 

@@ -11,8 +11,9 @@ namespace JsonP
 {
     enum JsonParseType
     {
-        STANDARD,
-        COMMENTS
+        STRING_STANDARD,
+        STRING_COMMENTS,
+        BINARY_STANDARD
     };
 
     class JsonValue;
@@ -108,11 +109,11 @@ namespace JsonP
         // Parse. If parse fails, return Json() and assign an error message to err.
         static Json parse(const std::string &in,
                           std::string &err,
-                          JsonParseType strategy = JsonParseType::STANDARD);
+                          JsonParseType strategy = JsonParseType::STRING_STANDARD);
 
         static Json parse(const char *in,
                           std::string &err,
-                          JsonParseType strategy = JsonParseType::STANDARD)
+                          JsonParseType strategy = JsonParseType::STRING_STANDARD)
         {
             if (in)
             {
@@ -129,12 +130,12 @@ namespace JsonP
             const std::string &in,
             std::string::size_type &parser_stop_pos,
             std::string &err,
-            JsonParseType strategy = JsonParseType::STANDARD);
+            JsonParseType strategy = JsonParseType::STRING_STANDARD);
 
         static inline std::vector<Json> parse_multi(
             const std::string &in,
             std::string &err,
-            JsonParseType strategy = JsonParseType::STANDARD)
+            JsonParseType strategy = JsonParseType::STRING_STANDARD)
         {
             std::string::size_type parser_stop_pos;
             return parse_multi(in, parser_stop_pos, err, strategy);
