@@ -7,7 +7,8 @@
 #include <cstring>
 #include <functional>
 
-namespace JsonP {
+namespace JsonP
+{
     constexpr int max_depth = 200;
 
     using std::initializer_list;
@@ -18,7 +19,8 @@ namespace JsonP {
     using std::vector;
 
     // Helper for representing null
-    struct NullStruct {
+    struct NullStruct
+    {
         bool operator==(NullStruct) const { return true; }
 
         bool operator<(NullStruct) const { return false; }
@@ -26,71 +28,103 @@ namespace JsonP {
 
     // Serialization
 
-    static void dump(NullStruct, string &out) {
+    static void dump(NullStruct, string &out)
+    {
         out += "null";
     }
 
-    static void dump(double value, string &out) {
-        if (std::isfinite(value)) {
+    static void dump(double value, string &out)
+    {
+        if (std::isfinite(value))
+        {
             char buf[32];
             snprintf(buf, sizeof buf, "%.17g", value);
             out += buf;
-        } else {
+        }
+        else
+        {
             out += "null";
         }
     }
 
-    static void dump(int value, string &out) {
+    static void dump(int value, string &out)
+    {
         char buf[32];
         snprintf(buf, sizeof buf, "%d", value);
         out += buf;
     }
 
-    static void dump(bool value, string &out) {
+    static void dump(bool value, string &out)
+    {
         out += value ? "true" : "false";
     }
 
-    static void dump(const string &value, string &out) {
+    static void dump(const string &value, string &out)
+    {
         out += '"';
-        for (size_t i = 0; i < value.length(); i++) {
+        for (size_t i = 0; i < value.length(); i++)
+        {
             const char ch = value[i];
-            if (ch == '\\') {
+            if (ch == '\\')
+            {
                 out += "\\\\";
-            } else if (ch == '"') {
+            }
+            else if (ch == '"')
+            {
                 out += "\\\"";
-            } else if (ch == '\b') {
+            }
+            else if (ch == '\b')
+            {
                 out += "\\b";
-            } else if (ch == '\f') {
+            }
+            else if (ch == '\f')
+            {
                 out += "\\f";
-            } else if (ch == '\n') {
+            }
+            else if (ch == '\n')
+            {
                 out += "\\n";
-            } else if (ch == '\r') {
+            }
+            else if (ch == '\r')
+            {
                 out += "\\r";
-            } else if (ch == '\t') {
+            }
+            else if (ch == '\t')
+            {
                 out += "\\t";
-            } else if (static_cast<uint8_t>(ch) <= 0x1f) {
+            }
+            else if (static_cast<uint8_t>(ch) <= 0x1f)
+            {
                 char buf[8];
                 snprintf(buf, sizeof buf, "\\u%04x", ch);
                 out += buf;
-            } else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[i + 1]) == 0x80 &&
-                       static_cast<uint8_t>(value[i + 2]) == 0xa8) {
+            }
+            else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[i + 1]) == 0x80 &&
+                     static_cast<uint8_t>(value[i + 2]) == 0xa8)
+            {
                 out += "\\u2028";
                 i += 2;
-            } else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[i + 1]) == 0x80 &&
-                       static_cast<uint8_t>(value[i + 2]) == 0xa9) {
+            }
+            else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[i + 1]) == 0x80 &&
+                     static_cast<uint8_t>(value[i + 2]) == 0xa9)
+            {
                 out += "\\u2029";
                 i += 2;
-            } else {
+            }
+            else
+            {
                 out += ch;
             }
         }
         out += '"';
     }
 
-    static void dump(const Json::array &values, string &out) {
+    static void dump(const Json::array &values, string &out)
+    {
         bool first = true;
         out += "[";
-        for (const auto &value: values) {
+        for (const auto &value : values)
+        {
             if (!first)
                 out += ", ";
             value.stringify(out);
@@ -99,10 +133,12 @@ namespace JsonP {
         out += "]";
     }
 
-    static void dump(const Json::object &values, string &out) {
+    static void dump(const Json::object &values, string &out)
+    {
         bool first = true;
         out += "{";
-        for (const auto &kv: values) {
+        for (const auto &kv : values)
+        {
             if (!first)
                 out += ", ";
             dump(kv.first, out);
@@ -113,29 +149,34 @@ namespace JsonP {
         out += "}";
     }
 
-    void Json::stringify(string &out) const {
+    void Json::stringify(string &out) const
+    {
         m_ptr->dump(out);
     }
 
     // deal with Json Value
 
-    template<Json::Type tag, typename T>
-    class Value : public JsonValue {
+    template <Json::Type tag, typename T>
+    class Value : public JsonValue
+    {
     protected:
         // Constructors
         explicit Value(const T &value) : m_value(value) {}
 
         explicit Value(T &&value) : m_value(move(value)) {}
 
-        Json::Type type() const override {
+        Json::Type type() const override
+        {
             return tag;
         }
 
-        bool equals(const JsonValue *other) const override {
+        bool equals(const JsonValue *other) const override
+        {
             return m_value == static_cast<const Value<tag, T> *>(other)->m_value;
         }
 
-        bool less(const JsonValue *other) const override {
+        bool less(const JsonValue *other) const override
+        {
             return m_value < static_cast<const Value<tag, T> *>(other)->m_value;
         }
 
@@ -145,7 +186,8 @@ namespace JsonP {
         T m_value;
     };
 
-    class JsonDouble final : public Value<Json::NUMBER, double> {
+    class JsonDouble final : public Value<Json::NUMBER, double>
+    {
         double number_value() const override { return m_value; }
 
         int int_value() const override { return static_cast<int>(m_value); }
@@ -158,7 +200,8 @@ namespace JsonP {
         explicit JsonDouble(double value) : Value(value) {}
     };
 
-    class JsonInt final : public Value<Json::NUMBER, int> {
+    class JsonInt final : public Value<Json::NUMBER, int>
+    {
         double number_value() const override { return m_value; }
 
         int int_value() const override { return m_value; }
@@ -171,14 +214,16 @@ namespace JsonP {
         explicit JsonInt(int value) : Value(value) {}
     };
 
-    class JsonBoolean final : public Value<Json::BOOL, bool> {
+    class JsonBoolean final : public Value<Json::BOOL, bool>
+    {
         bool bool_value() const override { return m_value; }
 
     public:
         explicit JsonBoolean(bool value) : Value(value) {}
     };
 
-    class JsonString final : public Value<Json::STRING, string> {
+    class JsonString final : public Value<Json::STRING, string>
+    {
         const string &string_value() const override { return m_value; }
 
     public:
@@ -187,7 +232,8 @@ namespace JsonP {
         explicit JsonString(string &&value) : Value(move(value)) {}
     };
 
-    class JsonArray final : public Value<Json::ARRAY, Json::array> {
+    class JsonArray final : public Value<Json::ARRAY, Json::array>
+    {
         const Json::array &array_items() const override { return m_value; }
 
         const Json &operator[](size_t i) const override;
@@ -204,7 +250,8 @@ namespace JsonP {
         explicit JsonArray(Json::array &&value) : Value(move(value)) {}
     };
 
-    class JsonObject final : public Value<Json::OBJECT, Json::object> {
+    class JsonObject final : public Value<Json::OBJECT, Json::object>
+    {
         const Json::object &object_items() const override { return m_value; }
 
         Json &operator[](const string &key) override;
@@ -219,12 +266,14 @@ namespace JsonP {
         explicit JsonObject(Json::object &&value) : Value(move(value)) {}
     };
 
-    class JsonNull final : public Value<Json::NUL, NullStruct> {
+    class JsonNull final : public Value<Json::NUL, NullStruct>
+    {
     public:
         JsonNull() : Value({}) {}
     };
 
-    struct Statics {
+    struct Statics
+    {
         Json empty_json;
         const string empty_string;
         const vector<Json> empty_vector;
@@ -235,35 +284,37 @@ namespace JsonP {
 
     static Statics null_object;
 
-    Json::Json() noexcept: m_ptr(make_unique<JsonNull>()) {}
+    Json::Json() noexcept : m_ptr(make_unique<JsonNull>()) {}
 
-    Json::Json(const Json &json) {
-        switch (json.type()) {
-            case Type::ARRAY:
-                m_ptr = make_unique<JsonArray>(json.array_items());
-                break;
-            case Type::BOOL:
-                m_ptr = make_unique<JsonBoolean>(json.bool_value());
-                break;
-            case Type::NUMBER:
-                m_ptr = make_unique<JsonDouble>(json.number_value());
-                break;
-            case Type::OBJECT:
-                m_ptr = make_unique<JsonObject>(json.object_items());
-                break;
-            case Type::STRING:
-                m_ptr = make_unique<JsonString>(json.string_value());
-                break;
-            case Type::NUL:
-            default:
-                m_ptr = make_unique<JsonNull>();
-                break;
+    Json::Json(const Json &json)
+    {
+        switch (json.type())
+        {
+        case Type::ARRAY:
+            m_ptr = make_unique<JsonArray>(json.array_items());
+            break;
+        case Type::BOOL:
+            m_ptr = make_unique<JsonBoolean>(json.bool_value());
+            break;
+        case Type::NUMBER:
+            m_ptr = make_unique<JsonDouble>(json.number_value());
+            break;
+        case Type::OBJECT:
+            m_ptr = make_unique<JsonObject>(json.object_items());
+            break;
+        case Type::STRING:
+            m_ptr = make_unique<JsonString>(json.string_value());
+            break;
+        case Type::NUL:
+        default:
+            m_ptr = make_unique<JsonNull>();
+            break;
         }
     }
 
-    Json::Json(Json &&json) noexcept: m_ptr(move(json.m_ptr)) {}
+    Json::Json(Json &&json) noexcept : m_ptr(move(json.m_ptr)) {}
 
-    Json::Json(std::nullptr_t) noexcept: m_ptr(make_unique<JsonNull>()) {}
+    Json::Json(std::nullptr_t) noexcept : m_ptr(make_unique<JsonNull>()) {}
 
     Json::Json(double value) : m_ptr(make_unique<JsonDouble>(value)) {}
 
@@ -339,115 +390,139 @@ namespace JsonP {
 
     Json &JsonValue::at(const string &) { return null_object.empty_json; }
 
-    Json &JsonObject::operator[](const string &key) {
+    Json &JsonObject::operator[](const string &key)
+    {
         return m_value[key];
     }
 
-    const Json &JsonObject::at(const string &key) const {
+    const Json &JsonObject::at(const string &key) const
+    {
         auto iter = m_value.find(key);
         return (iter == m_value.end()) ? null_object.empty_json : iter->second;
     }
 
-    Json &JsonObject::at(const string &key) {
+    Json &JsonObject::at(const string &key)
+    {
         auto iter = m_value.find(key);
         return (iter == m_value.end()) ? null_object.empty_json : iter->second;
     }
 
-    const Json &JsonArray::operator[](size_t i) const {
+    const Json &JsonArray::operator[](size_t i) const
+    {
         return m_value[i];
     }
 
-    Json &JsonArray::operator[](size_t i) {
+    Json &JsonArray::operator[](size_t i)
+    {
         return m_value[i];
     }
 
-    const Json &JsonArray::at(size_t i) const {
+    const Json &JsonArray::at(size_t i) const
+    {
         return i >= m_value.size() ? null_object.empty_json : m_value.at(i);
     }
 
-    Json &JsonArray::at(size_t i) {
+    Json &JsonArray::at(size_t i)
+    {
         return i >= m_value.size() ? null_object.empty_json : m_value.at(i);
     }
 
-    Json Json::operator=(const Json &json) {
-        switch (json.type()) {
-            case Type::ARRAY:
-                m_ptr = make_unique<JsonArray>(json.array_items());
-                break;
-            case Type::BOOL:
-                m_ptr = make_unique<JsonBoolean>(json.bool_value());
-                break;
-            case Type::NUMBER:
-                m_ptr = make_unique<JsonDouble>(json.number_value());
-                break;
-            case Type::OBJECT:
-                m_ptr = make_unique<JsonObject>(json.object_items());
-                break;
-            case Type::STRING:
-                m_ptr = make_unique<JsonString>(json.string_value());
-                break;
-            case Type::NUL:
-            default:
-                m_ptr = make_unique<JsonNull>();
-                break;
+    Json Json::operator=(const Json &json)
+    {
+        switch (json.type())
+        {
+        case Type::ARRAY:
+            m_ptr = make_unique<JsonArray>(json.array_items());
+            break;
+        case Type::BOOL:
+            m_ptr = make_unique<JsonBoolean>(json.bool_value());
+            break;
+        case Type::NUMBER:
+            m_ptr = make_unique<JsonDouble>(json.number_value());
+            break;
+        case Type::OBJECT:
+            m_ptr = make_unique<JsonObject>(json.object_items());
+            break;
+        case Type::STRING:
+            m_ptr = make_unique<JsonString>(json.string_value());
+            break;
+        case Type::NUL:
+        default:
+            m_ptr = make_unique<JsonNull>();
+            break;
         }
         return *this;
     }
 
-    Json Json::operator=(Json &&json) noexcept {
+    Json Json::operator=(Json &&json) noexcept
+    {
         m_ptr = move(json.m_ptr);
         return *this;
     }
 
-    bool Json::operator==(const Json &other) const {
-        if (m_ptr == other.m_ptr) {
+    bool Json::operator==(const Json &other) const
+    {
+        if (m_ptr == other.m_ptr)
+        {
             return true;
         }
-        if (m_ptr->type() != other.m_ptr->type()) {
+        if (m_ptr->type() != other.m_ptr->type())
+        {
             return false;
         }
 
         return m_ptr->equals(other.m_ptr.get());
     }
 
-    bool Json::operator<(const Json &other) const {
-        if (m_ptr == other.m_ptr) {
+    bool Json::operator<(const Json &other) const
+    {
+        if (m_ptr == other.m_ptr)
+        {
             return false;
         }
-        if (m_ptr->type() != other.m_ptr->type()) {
+        if (m_ptr->type() != other.m_ptr->type())
+        {
             return m_ptr->type() < other.m_ptr->type();
         }
 
         return m_ptr->less(other.m_ptr.get());
     }
 
-    inline string esc(char c) {
+    inline string esc(char c)
+    {
         char buf[12];
-        if (static_cast<uint8_t>(c) >= 0x20 && static_cast<uint8_t>(c) <= 0x7f) {
+        if (static_cast<uint8_t>(c) >= 0x20 && static_cast<uint8_t>(c) <= 0x7f)
+        {
             snprintf(buf, sizeof buf, "'%c' (%d)", c, c);
-        } else {
+        }
+        else
+        {
             snprintf(buf, sizeof buf, "(%d)", c);
         }
         return string(buf);
     }
 
-    inline bool in_range(long x, long lower, long upper) {
+    inline bool in_range(long x, long lower, long upper)
+    {
         return (x >= lower && x <= upper);
     }
 
     // parser
-    class StringParser {
+    class StringParser
+    {
     public:
         StringParser(const string &content, string &error_msg,
                      const JsonParseType &parser_type = JsonParseType::STRING_STANDARD)
-                : str(content), i(0), err(error_msg), failed(false), strategy(parser_type) {}
+            : str(content), i(0), err(error_msg), failed(false), strategy(parser_type) {}
 
         /* parse_json()
          *
          * Parse a JSON object.
          */
-        Json parse_json(int depth) {
-            if (depth > max_depth) {
+        Json parse_json(int depth)
+        {
+            if (depth > max_depth)
+            {
                 return fail("exceeded maximum nesting depth");
             }
 
@@ -455,7 +530,8 @@ namespace JsonP {
             if (failed)
                 return Json();
 
-            if (ch == '-' || (ch >= '0' && ch <= '9')) {
+            if (ch == '-' || (ch >= '0' && ch <= '9'))
+            {
                 i--;
                 return parse_number();
             }
@@ -472,13 +548,15 @@ namespace JsonP {
             if (ch == '"')
                 return parse_string();
 
-            if (ch == '{') {
+            if (ch == '{')
+            {
                 map<string, Json> data;
                 ch = get_next_token();
                 if (ch == '}')
                     return data;
 
-                while (1) {
+                while (1)
+                {
                     if (ch != '"')
                         return fail("expected '\"' in object, got " + esc(ch));
 
@@ -505,13 +583,15 @@ namespace JsonP {
                 return data;
             }
 
-            if (ch == '[') {
+            if (ch == '[')
+            {
                 vector<Json> data;
                 ch = get_next_token();
                 if (ch == ']')
                     return data;
 
-                while (1) {
+                while (1)
+                {
                     i--;
                     data.push_back(parse_json(depth + 1));
                     if (failed)
@@ -524,7 +604,7 @@ namespace JsonP {
                         return fail("expected ',' in list, got " + esc(ch));
 
                     ch = get_next_token();
-                    (void) ch;
+                    (void)ch;
                 }
                 return data;
             }
@@ -552,12 +632,14 @@ namespace JsonP {
          *
          * Mark this parse as failed.
          */
-        Json fail(string &&msg) {
+        Json fail(string &&msg)
+        {
             return fail(move(msg), Json());
         }
 
-        template<typename T>
-        T fail(string &&msg, const T err_ret) {
+        template <typename T>
+        T fail(string &&msg, const T err_ret)
+        {
             if (!failed)
                 err = std::move(msg);
             failed = true;
@@ -568,11 +650,14 @@ namespace JsonP {
          *
          * Advance until the current character is non-whitespace and non-comment.
          */
-        void consume_garbage() {
+        void consume_garbage()
+        {
             consume_whitespace();
-            if (strategy == JsonParseType::STRING_COMMENTS) {
+            if (strategy == JsonParseType::STRING_COMMENTS)
+            {
                 bool comment_found = false;
-                do {
+                do
+                {
                     comment_found = consume_comment();
                     if (failed)
                         return;
@@ -585,7 +670,8 @@ namespace JsonP {
          *
          * Advance until the current character is non-whitespace.
          */
-        void consume_whitespace() {
+        void consume_whitespace()
+        {
             while (str[i] == ' ' || str[i] == '\r' || str[i] == '\n' || str[i] == '\t')
                 i++;
         }
@@ -594,33 +680,41 @@ namespace JsonP {
          *
          * Advance comments (c-style inline and multiline).
          */
-        bool consume_comment() {
+        bool consume_comment()
+        {
             bool comment_found = false;
-            if (str[i] == '/') {
+            if (str[i] == '/')
+            {
                 i++;
                 if (i == str.size())
                     return fail("unexpected end of input after start of comment", false);
-                if (str[i] == '/') { // inline comment
+                if (str[i] == '/')
+                { // inline comment
                     i++;
                     // advance until next line, or end of input
-                    while (i < str.size() && str[i] != '\n') {
+                    while (i < str.size() && str[i] != '\n')
+                    {
                         i++;
                     }
                     comment_found = true;
-                } else if (str[i] == '*') { // multiline comment
+                }
+                else if (str[i] == '*')
+                { // multiline comment
                     i++;
                     if (i > str.size() - 2)
                         return fail("unexpected end of input inside multi-line comment", false);
                     // advance until closing tokens
-                    while (!(str[i] == '*' && str[i + 1] == '/')) {
+                    while (!(str[i] == '*' && str[i + 1] == '/'))
+                    {
                         i++;
                         if (i > str.size() - 2)
                             return fail(
-                                    "unexpected end of input inside multi-line comment", false);
+                                "unexpected end of input inside multi-line comment", false);
                     }
                     i += 2;
                     comment_found = true;
-                } else
+                }
+                else
                     return fail("malformed comment", false);
             }
             return comment_found;
@@ -631,12 +725,13 @@ namespace JsonP {
          * Return the next non-whitespace character. If the end of the input is reached,
          * flag an error and return 0.
          */
-        char get_next_token() {
+        char get_next_token()
+        {
             consume_garbage();
             if (failed)
-                return (char) 0;
+                return (char)0;
             if (i == str.size())
-                return fail("unexpected end of input", (char) 0);
+                return fail("unexpected end of input", (char)0);
 
             return str[i++];
         }
@@ -645,20 +740,28 @@ namespace JsonP {
          *
          * Encode pt as UTF-8 and add it to out.
          */
-        void encode_utf8(long pt, string &out) {
+        void encode_utf8(long pt, string &out)
+        {
             if (pt < 0)
                 return;
 
-            if (pt < 0x80) {
+            if (pt < 0x80)
+            {
                 out += static_cast<char>(pt);
-            } else if (pt < 0x800) {
+            }
+            else if (pt < 0x800)
+            {
                 out += static_cast<char>((pt >> 6) | 0xC0);
                 out += static_cast<char>((pt & 0x3F) | 0x80);
-            } else if (pt < 0x10000) {
+            }
+            else if (pt < 0x10000)
+            {
                 out += static_cast<char>((pt >> 12) | 0xE0);
                 out += static_cast<char>(((pt >> 6) & 0x3F) | 0x80);
                 out += static_cast<char>((pt & 0x3F) | 0x80);
-            } else {
+            }
+            else
+            {
                 out += static_cast<char>((pt >> 18) | 0xF0);
                 out += static_cast<char>(((pt >> 12) & 0x3F) | 0x80);
                 out += static_cast<char>(((pt >> 6) & 0x3F) | 0x80);
@@ -670,16 +773,19 @@ namespace JsonP {
          *
          * Parse a string, starting at the current position.
          */
-        string parse_string() {
+        string parse_string()
+        {
             string out;
             long last_escaped_codepoint = -1;
-            while (true) {
+            while (true)
+            {
                 if (i == str.size())
                     return fail("unexpected end of input in string", "");
 
                 char ch = str[i++];
 
-                if (ch == '"') {
+                if (ch == '"')
+                {
                     encode_utf8(last_escaped_codepoint, out);
                     return out;
                 }
@@ -688,7 +794,8 @@ namespace JsonP {
                     return fail("unescaped " + esc(ch) + " in string", "");
 
                 // The usual case: non-escaped characters
-                if (ch != '\\') {
+                if (ch != '\\')
+                {
                     encode_utf8(last_escaped_codepoint, out);
                     last_escaped_codepoint = -1;
                     out += ch;
@@ -701,16 +808,19 @@ namespace JsonP {
 
                 ch = str[i++];
 
-                if (ch == 'u') {
+                if (ch == 'u')
+                {
                     // Extract 4-byte escape sequence
                     string esc = str.substr(i, 4);
                     // Explicitly check length of the substring. The following loop
                     // relies on std::string returning the terminating NUL when
                     // accessing str[length]. Checking here reduces brittleness.
-                    if (esc.length() < 4) {
+                    if (esc.length() < 4)
+                    {
                         return fail("bad \\u escape: " + esc, "");
                     }
-                    for (size_t j = 0; j < 4; j++) {
+                    for (size_t j = 0; j < 4; j++)
+                    {
                         if (!in_range(esc[j], 'a', 'f') && !in_range(esc[j], 'A', 'F') && !in_range(esc[j], '0', '9'))
                             return fail("bad \\u escape: " + esc, "");
                     }
@@ -721,12 +831,15 @@ namespace JsonP {
                     // of 4-hex-digit \u escapes encoding their surrogate pair components. Check
                     // whether we're in the middle of such a beast: the previous codepoint was an
                     // escaped lead (high) surrogate, and this is a trail (low) surrogate.
-                    if (in_range(last_escaped_codepoint, 0xD800, 0xDBFF) && in_range(codepoint, 0xDC00, 0xDFFF)) {
+                    if (in_range(last_escaped_codepoint, 0xD800, 0xDBFF) && in_range(codepoint, 0xDC00, 0xDFFF))
+                    {
                         // Reassemble the two surrogate pairs into one astral-plane character, per
                         // the UTF-16 algorithm.
                         encode_utf8((((last_escaped_codepoint - 0xD800) << 10) | (codepoint - 0xDC00)) + 0x10000, out);
                         last_escaped_codepoint = -1;
-                    } else {
+                    }
+                    else
+                    {
                         encode_utf8(last_escaped_codepoint, out);
                         last_escaped_codepoint = codepoint;
                     }
@@ -738,19 +851,32 @@ namespace JsonP {
                 encode_utf8(last_escaped_codepoint, out);
                 last_escaped_codepoint = -1;
 
-                if (ch == 'b') {
+                if (ch == 'b')
+                {
                     out += '\b';
-                } else if (ch == 'f') {
+                }
+                else if (ch == 'f')
+                {
                     out += '\f';
-                } else if (ch == 'n') {
+                }
+                else if (ch == 'n')
+                {
                     out += '\n';
-                } else if (ch == 'r') {
+                }
+                else if (ch == 'r')
+                {
                     out += '\r';
-                } else if (ch == 't') {
+                }
+                else if (ch == 't')
+                {
                     out += '\t';
-                } else if (ch == '"' || ch == '\\' || ch == '/') {
+                }
+                else if (ch == '"' || ch == '\\' || ch == '/')
+                {
                     out += ch;
-                } else {
+                }
+                else
+                {
                     return fail("invalid escape character " + esc(ch), "");
                 }
             }
@@ -760,32 +886,40 @@ namespace JsonP {
          *
          * Parse a double.
          */
-        Json parse_number() {
+        Json parse_number()
+        {
             size_t start_pos = i;
 
             if (str[i] == '-')
                 i++;
 
             // Integer part
-            if (str[i] == '0') {
+            if (str[i] == '0')
+            {
                 i++;
                 if (in_range(str[i], '0', '9'))
                     return fail("leading 0s not permitted in numbers");
-            } else if (in_range(str[i], '1', '9')) {
+            }
+            else if (in_range(str[i], '1', '9'))
+            {
                 i++;
                 while (in_range(str[i], '0', '9'))
                     i++;
-            } else {
+            }
+            else
+            {
                 return fail("invalid " + esc(str[i]) + " in number");
             }
 
             if (str[i] != '.' && str[i] != 'e' && str[i] != 'E' &&
-                (i - start_pos) <= static_cast<size_t>(std::numeric_limits<int>::digits10)) {
+                (i - start_pos) <= static_cast<size_t>(std::numeric_limits<int>::digits10))
+            {
                 return std::atoi(str.c_str() + start_pos);
             }
 
             // Decimal part
-            if (str[i] == '.') {
+            if (str[i] == '.')
+            {
                 i++;
                 if (!in_range(str[i], '0', '9'))
                     return fail("at least one digit required in fractional part");
@@ -795,7 +929,8 @@ namespace JsonP {
             }
 
             // Exponent part
-            if (str[i] == 'e' || str[i] == 'E') {
+            if (str[i] == 'e' || str[i] == 'E')
+            {
                 i++;
 
                 if (str[i] == '+' || str[i] == '-')
@@ -816,82 +951,102 @@ namespace JsonP {
          * Expect that 'str' starts at the character that was just read. If it does, advance
          * the input and return res. If not, flag an error.
          */
-        Json expect(const string &expected, Json res) {
+        Json expect(const string &expected, Json res)
+        {
             assert(i != 0);
             i--;
-            if (str.compare(i, expected.length(), expected) == 0) {
+            if (str.compare(i, expected.length(), expected) == 0)
+            {
                 i += expected.length();
                 return res;
-            } else {
+            }
+            else
+            {
                 return fail("parse error: expected " + expected + ", got " + str.substr(i, expected.length()));
             }
         }
     };
 
-    class CborParser {
+    class CborParser
+    {
     public:
         CborParser(const string &in, string &err_msg)
-                : status(DecodeStatus::START), curidx(0), curlen(0), instant_num(0), str(in), err(err_msg) {
+            : status(DecodeStatus::START), curidx(0), curlen(0), instant_num(0), str(in), err(err_msg)
+        {
         }
 
-        Json parser_json(int depth) {
-            if (depth > max_depth) {
+        Json parser_json(int depth)
+        {
+            if (depth > max_depth)
+            {
                 return fail("exceeded maximum nesting depth");
             }
-            switch (status) {
-                case DecodeStatus::START:
-                    parser_start();
-                    break;
-                case DecodeStatus::TYPE:
-                    parser_type();
-                    break;
-                case DecodeStatus::PINT:
-                    return parser_pint();
-                case DecodeStatus::NINT:
-                    return parser_nint();
-                case DecodeStatus::FLOAT:
-                    return parser_float();
-                case DecodeStatus::DOUBLE:
-                    return parser_double();
-                case DecodeStatus::STRING_SIZE:
-                    parser_string_size();
-                    break;
-                case DecodeStatus::BYTES_SIZE:
-                    parser_bytes_size();
-                    break;
-                case DecodeStatus::STRING_DATA:
-                case DecodeStatus::BYTES_DATA:
-                    return parser_string();
-                case DecodeStatus::BOOL:
-                    return (instant_num == 0x15);
-                case DecodeStatus::NIL:
-                    return {};
-                case DecodeStatus::OBJECT: {
-                    map<string, Json> data;
-                    for (auto i = 0u; i < instant_num; ++i) {
-                        auto key = parser_json(depth + 1);
-                        if (key.type() != Json::STRING) {
-                            fail("Object key value is not string.");
-                            break;
-                        }
-                        data.insert(std::make_pair(key.string_value(), parser_json(depth + 1)));
+            switch (status)
+            {
+            case DecodeStatus::START:
+                parser_start();
+                break;
+            case DecodeStatus::TYPE:
+                parser_type();
+                break;
+            case DecodeStatus::PINT:
+                return parser_pint();
+            case DecodeStatus::NINT:
+                return parser_nint();
+            case DecodeStatus::FLOAT:
+                return parser_float();
+            case DecodeStatus::DOUBLE:
+                return parser_double();
+            case DecodeStatus::STRING_SIZE:
+                parser_string_size();
+                break;
+            case DecodeStatus::BYTES_SIZE:
+                parser_bytes_size();
+                break;
+            case DecodeStatus::STRING_DATA:
+            case DecodeStatus::BYTES_DATA:
+                return parser_string();
+            case DecodeStatus::BOOL:
+                status = DecodeStatus::TYPE;
+                return (instant_num == 0x15);
+            case DecodeStatus::NIL:
+                status = DecodeStatus::TYPE;
+                return {};
+            case DecodeStatus::OBJECT:
+            {
+                status = DecodeStatus::TYPE;
+                map<string, Json> data;
+                auto len = instant_num;
+                for (auto i = 0u; i < len; ++i)
+                {
+                    auto key = parser_json(depth + 1);
+                    if (key.type() != Json::STRING)
+                    {
+                        fail("Object key value is not string.");
+                        break;
                     }
-                    return data;
+                    data.insert(std::make_pair(key.string_value(), parser_json(depth + 1)));
                 }
-                    break;
-                case DecodeStatus::ARRAY: {
-                    vector<Json> data;
-                    data.reserve(instant_num);
-                    for (auto i = 0u; i < instant_num; ++i) {
-                        data.push_back(parser_json(depth + 1));
-                    }
-                }
-                    break;
-                case DecodeStatus::ERROR:
-                default:
-                    break;
+                return data;
             }
-            return fail("expected value");
+            break;
+            case DecodeStatus::ARRAY:
+            {
+                status = DecodeStatus::TYPE;
+                vector<Json> data;
+                data.reserve(instant_num);
+                auto len = instant_num;
+                for (auto i = 0u; i < len; ++i)
+                {
+                    data.push_back(parser_json(depth + 1));
+                }
+                return data;
+            }
+            case DecodeStatus::ERROR:
+            default:
+                return {};
+            }
+            return parser_json(depth + 1);
         }
 
         friend Json Json::parse(const string &in, string &err, JsonParseType strategy);
@@ -902,7 +1057,8 @@ namespace JsonP {
                                               JsonParseType strategy);
 
     private:
-        enum DecodeStatus {
+        enum DecodeStatus
+        {
             START,
             TYPE,
             PINT,
@@ -923,44 +1079,52 @@ namespace JsonP {
         } status;
         size_t curidx;
         size_t curlen;
-        uint64_t instant_num;
+        int instant_num;
         const string &str;
         string &err;
 
     private:
-        Json fail(string &&msg) {
+        Json fail(string &&msg)
+        {
             return fail(move(msg), Json());
         }
 
-        template<typename T>
-        T fail(string &&msg, const T err_ret) {
-            if (!status == DecodeStatus::ERROR) {
+        template <typename T>
+        T fail(string &&msg, const T err_ret)
+        {
+            if (!status == DecodeStatus::ERROR)
+            {
                 err = std::move(msg);
             }
             status = DecodeStatus::ERROR;
             return err_ret;
         }
 
-        bool has_bytes(size_t n) {
+        bool has_bytes(size_t n)
+        {
             return curidx + n <= str.size();
         }
 
-        char get_byte() {
+        unsigned char get_byte()
+        {
             return str.at(curidx++);
         }
 
-        void copy_bytes(void *to, size_t n) {
+        void copy_bytes(void *to, size_t n)
+        {
             memcpy(to, (str.data() + curidx), n);
             curidx += n;
         }
 
-        unsigned short get_uint8() {
+        unsigned short get_uint8()
+        {
             unsigned short value =
-                    static_cast<unsigned short>(get_byte()) << 8 | static_cast<unsigned short>(get_byte());
+                static_cast<unsigned short>(get_byte()) << 8 | static_cast<unsigned short>(get_byte());
             return value;
         }
 
-        unsigned int get_uint32() {
+        unsigned int get_uint32()
+        {
             unsigned int value = (static_cast<unsigned int>(get_byte()) << 24) |
                                  (static_cast<unsigned int>(get_byte()) << 16) |
                                  (static_cast<unsigned int>(get_byte()) << 8) |
@@ -968,7 +1132,8 @@ namespace JsonP {
             return value;
         }
 
-        unsigned long long get_uint64() {
+        unsigned long long get_uint64()
+        {
             unsigned long long value = (static_cast<unsigned long long>(get_byte()) << 56) |
                                        (static_cast<unsigned long long>(get_byte()) << 48) |
                                        (static_cast<unsigned long long>(get_byte()) << 40) |
@@ -980,7 +1145,8 @@ namespace JsonP {
             return value;
         }
 
-        float get_float() {
+        float get_float()
+        {
             // todo: related to byte_order
             float tmp = 0.0f;
             uint8_t value[4] = {0};
@@ -992,7 +1158,8 @@ namespace JsonP {
             return tmp;
         }
 
-        double get_double() {
+        double get_double()
+        {
             double tmp = 0.0;
             uint8_t value[8] = {0};
             value[7] = get_byte();
@@ -1008,240 +1175,283 @@ namespace JsonP {
         }
 
     private:
-        void parser_start() {
-            if (!has_bytes(1)) {
+        void parser_start()
+        {
+            if (!has_bytes(1))
+            {
                 fail("not enough length!");
-                return;
             }
             auto type = get_byte();
             auto major_type = type >> 5;
             auto minor_type = type & 0x1f;
-            switch (major_type) {
-                case 4:
-                    status = DecodeStatus::ARRAY;
-                    decompose_type(minor_type, minor_type, status);
-                    break;
-                case 5:
-                    status = DecodeStatus::OBJECT;
-                    decompose_type(minor_type, minor_type, status);
-                    break;
-                default:
-                    fail("root object is not a json object");
-                    break;
+            switch (major_type)
+            {
+            case 4:
+                status = DecodeStatus::ARRAY;
+                decompose_type(minor_type, minor_type, status);
+                break;
+            case 5:
+                status = DecodeStatus::OBJECT;
+                decompose_type(minor_type, minor_type, status);
+                break;
+            default:
+                fail("root object is not a json object");
             }
         }
 
-        void parser_type() {
-            if (!has_bytes(1)) {
+        void parser_type()
+        {
+            if (!has_bytes(1))
+            {
                 fail("not enough length!", "");
                 return;
             }
             auto type = get_byte();
             auto major_type = type >> 5;
             auto minor_type = type & 0x1f;
-            switch (major_type) {
-                case 0: // positive
-                    status = DecodeStatus::PINT;
-                    decompose_type(minor_type, minor_type, status);
-                    break;
-                case 1: // negative
-                    status = DecodeStatus::NINT;
-                    decompose_type(minor_type, minor_type, status);
-                    break;
-                case 2: // bytes
-                    status = DecodeStatus::BYTES_SIZE;
-                    decompose_type(minor_type, 0, DecodeStatus::BYTES_DATA, minor_type);
-                    break;
-                case 3: // string
-                    status = DecodeStatus::STRING_SIZE;
-                    decompose_type(minor_type, 0, DecodeStatus::STRING_DATA, minor_type);
-                    break;
-                case 4: // array
-                    status = DecodeStatus::ARRAY;
-                    decompose_type(minor_type, minor_type, status);
-                    break;
-                case 5: // map
-                    status = DecodeStatus::OBJECT;
-                    decompose_type(minor_type, minor_type, status);
-                    break;
-                case 6: // tag
-                    status = DecodeStatus::TAG;
-                    decompose_type(minor_type, minor_type, status);
-                    break;
-                case 7: // special
-                    if (minor_type == 0x14) {
-                        status = DecodeStatus::BOOL;
-                        instant_num = minor_type;
-                    } else if (minor_type == 0x15) {
-                        status = DecodeStatus::BOOL;
-                        instant_num = minor_type;
-                    } else if (minor_type == 0x16) {
-                        status = DecodeStatus::NIL;
-                        instant_num = minor_type;
-                    } else if (minor_type == 0x18) {
-                        status = DecodeStatus::SPECIAL;
-                        curlen = 1;
-                    } else if (minor_type == 0x19) { // 2 byte
-                        curlen = 2;
-                        status = DecodeStatus::SPECIAL;
-                    } else if (minor_type == 0x1A) { // 4 byte
-                        curlen = 4;
-                        status = DecodeStatus::FLOAT;
-                    } else if (minor_type == 0x1B) { // 8 byte
-                        curlen = 8;
-                        status = DecodeStatus::DOUBLE;
-                    } else {
-                        fail("invalid special type", "");
-                    }
-                    break;
-                default:
-                    fail("unknow major_type", "");
-                    break;
+            switch (major_type)
+            {
+            case 0: // positive
+                status = DecodeStatus::PINT;
+                decompose_type(minor_type, minor_type, status);
+                break;
+            case 1: // negative
+                status = DecodeStatus::NINT;
+                decompose_type(minor_type, minor_type, status);
+                break;
+            case 2: // bytes
+                status = DecodeStatus::BYTES_SIZE;
+                decompose_type(minor_type, 0, DecodeStatus::BYTES_DATA, minor_type);
+                break;
+            case 3: // string
+                status = DecodeStatus::STRING_SIZE;
+                decompose_type(minor_type, 0, DecodeStatus::STRING_DATA, minor_type);
+                break;
+            case 4: // array
+                status = DecodeStatus::ARRAY;
+                decompose_type(minor_type, minor_type, status);
+                break;
+            case 5: // map
+                status = DecodeStatus::OBJECT;
+                decompose_type(minor_type, minor_type, status);
+                break;
+            case 6: // tag
+                status = DecodeStatus::TAG;
+                decompose_type(minor_type, minor_type, status);
+                break;
+            case 7: // special
+                if (minor_type == 0x14)
+                {
+                    status = DecodeStatus::BOOL;
+                    instant_num = minor_type;
+                }
+                else if (minor_type == 0x15)
+                {
+                    status = DecodeStatus::BOOL;
+                    instant_num = minor_type;
+                }
+                else if (minor_type == 0x16)
+                {
+                    status = DecodeStatus::NIL;
+                    instant_num = minor_type;
+                }
+                else if (minor_type == 0x18)
+                {
+                    status = DecodeStatus::SPECIAL;
+                    curlen = 1;
+                }
+                else if (minor_type == 0x19)
+                { // 2 byte
+                    curlen = 2;
+                    status = DecodeStatus::SPECIAL;
+                }
+                else if (minor_type == 0x1A)
+                { // 4 byte
+                    curlen = 4;
+                    status = DecodeStatus::FLOAT;
+                }
+                else if (minor_type == 0x1B)
+                { // 8 byte
+                    curlen = 8;
+                    status = DecodeStatus::DOUBLE;
+                }
+                else
+                {
+                    fail("invalid special type", "");
+                }
+                break;
+            default:
+                fail("unknow major_type", "");
+                break;
             }
         }
 
-        void parser_bytes_size() {
-            if (!has_bytes(curlen)) {
+        void parser_bytes_size()
+        {
+            if (!has_bytes(curlen))
+            {
                 fail("not enough length!", "");
                 return;
             }
             status = DecodeStatus::BYTES_DATA;
-            switch (curlen) {
-                case 0:
-                    curlen = instant_num;
-                    break;
-                case 1:
-                    curlen = get_byte();
-                    break;
-                case 2:
-                case 4:
-                    curlen = get_uint8();
-                    break;
-                case 8:
-                    fail("extra long bytes", "");
-                    break;
+            switch (curlen)
+            {
+            case 0:
+                curlen = instant_num;
+                break;
+            case 1:
+                curlen = get_byte();
+                break;
+            case 2:
+            case 4:
+                curlen = get_uint8();
+                break;
+            case 8:
+                fail("extra long bytes", "");
+                break;
             }
         }
 
-        void parser_string_size() {
-            if (!has_bytes(curlen)) {
+        void parser_string_size()
+        {
+            if (!has_bytes(curlen))
+            {
                 fail("not enough length!", "");
                 return;
             }
             status = DecodeStatus::STRING_SIZE;
-            switch (curlen) {
-                case 0:
-                    curlen = instant_num;
-                    break;
-                case 1:
-                    curlen = get_byte();
-                    break;
-                case 2:
-                case 4:
-                    curlen = get_uint8();
-                    break;
-                case 8:
-                    fail("extra long bytes", "");
-                    break;
+            switch (curlen)
+            {
+            case 0:
+                curlen = instant_num;
+                break;
+            case 1:
+                curlen = get_byte();
+                break;
+            case 2:
+            case 4:
+                curlen = get_uint8();
+                break;
+            case 8:
+                fail("extra long bytes", "");
+                break;
             }
         }
 
-        int parser_pint() {
-            if (!has_bytes(curlen)) {
+        int parser_pint()
+        {
+            if (!has_bytes(curlen))
+            {
                 return fail("not enough length!", 0);
             }
             int result = 0;
-            switch (curlen) {
-                // instant number
-                case 0:
-                    result = instant_num;
-                    break;
-                    // u8
-                case 1:
-                    result = get_byte();
-                    break;
-                    // u16
-                case 2:
-                    result = get_uint8();
-                    break;
-                    // u32
-                case 4:
-                    // todo :overflow
+            switch (curlen)
+            {
+            // instant number
+            case 0:
+                result = instant_num;
+                break;
+                // u8
+            case 1:
+                result = get_byte();
+                break;
+                // u16
+            case 2:
+                result = get_uint8();
+                break;
+                // u32
+            case 4:
+                // todo :overflow
                 {
                     auto temp = get_uint8();
-                    if (result <= std::numeric_limits<int>::max()) {
+                    if (result <= std::numeric_limits<int>::max())
+                    {
                         result = temp;
-                    } else {
+                    }
+                    else
+                    {
                         result = fail("exceed integer range", std::numeric_limits<int>::max());
                     }
                 }
-                    break;
-                    // u64
-                case 8:
-                    result = fail("exceed integer range", std::numeric_limits<int>::max());
-                    break;
+                break;
+                // u64
+            case 8:
+                result = fail("exceed integer range", std::numeric_limits<int>::max());
+                break;
             }
             status = DecodeStatus::TYPE;
             return result;
         }
 
-        int parser_nint() {
-            if (!has_bytes(curlen)) {
+        int parser_nint()
+        {
+            if (!has_bytes(curlen))
+            {
                 return fail("not enough length!", 0);
             }
             int result = 0;
-            switch (curlen) {
-                // instant number
-                case 0:
-                    result = -1 - instant_num;
-                    break;
-                    // u8
-                case 1:
-                    result = -static_cast<int>(get_byte()) - 1;
-                    break;
-                    // u16
-                case 2:
-                    result = -static_cast<int>(get_uint8()) - 1;
-                    break;
-                    // u32
-                case 4:
-                    // todo :overflow
+            switch (curlen)
+            {
+            // instant number
+            case 0:
+                result = -1 - instant_num;
+                break;
+                // u8
+            case 1:
+                result = -static_cast<int>(get_byte()) - 1;
+                break;
+                // u16
+            case 2:
+                result = -static_cast<int>(get_uint8()) - 1;
+                break;
+                // u32
+            case 4:
+                // todo :overflow
                 {
                     auto temp = get_uint8();
-                    if (result <= std::numeric_limits<int>::max()) {
+                    if (result <= std::numeric_limits<int>::max())
+                    {
                         result = -static_cast<int>(temp) - 1;
-                    } else {
+                    }
+                    else
+                    {
                         result = fail("exceed integer range", std::numeric_limits<int>::min());
                     }
                 }
-                    break;
-                    // u64
-                case 8:
-                    result = fail("exceed integer range", std::numeric_limits<int>::min());
-                    break;
+                break;
+                // u64
+            case 8:
+                result = fail("exceed integer range", std::numeric_limits<int>::min());
+                break;
             }
             status = DecodeStatus::TYPE;
             return result;
         }
 
-        float parser_float() {
-            if (!has_bytes(curlen)) {
+        float parser_float()
+        {
+            if (!has_bytes(curlen))
+            {
                 return fail("not enough length!", 0.0f);
             }
             status = DecodeStatus::TYPE;
             return get_float();
         }
 
-        double parser_double() {
-            if (!has_bytes(curlen)) {
+        double parser_double()
+        {
+            if (!has_bytes(curlen))
+            {
                 return fail("not enough length!", 0.0);
             }
             status = DecodeStatus::TYPE;
             return get_double();
         }
 
-        string parser_string() {
-            if (!has_bytes(curlen)) {
+        string parser_string()
+        {
+            if (!has_bytes(curlen))
+            {
                 return fail("not enough length!", "");
             }
             status = DecodeStatus::TYPE;
@@ -1251,46 +1461,66 @@ namespace JsonP {
         }
 
         void decompose_type(
-                int minor_type, uint64_t instant_number, DecodeStatus set_status, size_t setlen = 0) {
-            if (minor_type <= 0x17) {
+            int minor_type, int instant_number, DecodeStatus set_status, size_t setlen = 0)
+        {
+            if (minor_type <= 0x17)
+            {
                 curlen = setlen;
                 instant_num = instant_number;
                 status = set_status;
-            } else if (minor_type == 0x18) { // 1 byte
+            }
+            else if (minor_type == 0x18)
+            { // 1 byte
                 curlen = 1;
-            } else if (minor_type == 0x19) { // 2 byte
+            }
+            else if (minor_type == 0x19)
+            { // 2 byte
                 curlen = 2;
-            } else if (minor_type == 0x1A) { // 4 byte
+            }
+            else if (minor_type == 0x1A)
+            { // 4 byte
                 curlen = 4;
-            } else if (minor_type == 0x1B) { // 8 byte
+            }
+            else if (minor_type == 0x1B)
+            { // 8 byte
                 curlen = 8;
-            } else {
+            }
+            else
+            {
                 fail("invalid minor type", "");
             }
         }
     };
 
-    Json Json::parse(const string &in, string &err, JsonParseType strategy) {
-        if (strategy == JsonParseType::BINARY_STANDARD) {
+    Json Json::parse(const string &in, string &err, JsonParseType strategy)
+    {
+        if (strategy == JsonParseType::BINARY_STANDARD)
+        {
             CborParser parser(in, err);
             Json result = parser.parser_json(0);
-            if (parser.status == CborParser::DecodeStatus::ERROR) {
+            if (parser.status == CborParser::DecodeStatus::ERROR)
+            {
                 return {};
             }
-            if (parser.curidx != in.size()) {
+            if (parser.curidx != in.size())
+            {
                 return parser.fail("unexpected trailing");
             }
             return result;
-        } else {
+        }
+        else
+        {
             StringParser parser(in, err, strategy);
             Json result = parser.parse_json(0);
 
             // Check for any trailing garbage
             parser.consume_garbage();
-            if (parser.failed) {
+            if (parser.failed)
+            {
                 return {};
             }
-            if (parser.i != in.size()) {
+            if (parser.i != in.size())
+            {
                 return parser.fail("unexpected trailing " + esc(in[parser.i]));
             }
             return result;
@@ -1300,11 +1530,13 @@ namespace JsonP {
     vector<Json> Json::parse_multi(const string &in,
                                    std::string::size_type &parser_stop_pos,
                                    string &err,
-                                   JsonParseType strategy) {
+                                   JsonParseType strategy)
+    {
         StringParser parser(in, err, strategy);
         parser_stop_pos = 0;
         vector<Json> json_vec;
-        while (parser.i != in.size() && !parser.failed) {
+        while (parser.i != in.size() && !parser.failed)
+        {
             json_vec.push_back(parser.parse_json(0));
             if (parser.failed)
                 break;
@@ -1318,14 +1550,18 @@ namespace JsonP {
         return json_vec;
     }
 
-    bool Json::has_shape(const shape &types, string &err) const {
-        if (!is_object()) {
+    bool Json::has_shape(const shape &types, string &err) const
+    {
+        if (!is_object())
+        {
             err = "expected JSON object, got " + stringify();
             return false;
         }
 
-        for (auto &item: types) {
-            if ((*this).at(item.first).type() != item.second) {
+        for (auto &item : types)
+        {
+            if ((*this).at(item.first).type() != item.second)
+            {
                 err = "bad type for " + item.first + " in " + stringify();
                 return false;
             }
