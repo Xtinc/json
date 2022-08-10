@@ -4,20 +4,25 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include "json.h"
 #include <list>
 #include <set>
 #include <unordered_map>
 #include <algorithm>
 #include <type_traits>
+#include <cmath>
 
 #define JSON_TEST_CPP_PREFIX_CODE
 #define JSON_TEST_CPP_SUFFIX_CODE
 #define JSON_TEST_STANDALONE_MAIN 1
 #define JSON_TEST_ASSERT(b) assert(b)
+#define JSON_STRING_ASSERT(a, b) assert(strcmp(a, b) == 0)
+#define JSON_FLOAT_ASSERT(a, b) assert(fabs(a - b) < 1.0E-5)
 
 using namespace JsonP;
 using std::string;
+using bytesArray = std::vector<uint8_t>;
 
 #define CHECK_TRAIT(x) static_assert(std::x::value, #x)
 CHECK_TRAIT(is_nothrow_constructible<Json>);
@@ -270,7 +275,95 @@ void jsonp_test()
     }
 }
 
+void cborp_test()
+{
+    auto bytes2string = [](const bytesArray &bytes) -> string
+    {
+        return string((char *)bytes.data(), bytes.size());
+    };
+
+    string err;
+    auto array_string = bytes2string({0x80});
+    auto j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::ARRAY);
+    JSON_TEST_ASSERT(j.array_items().size() == 0);
+
+    array_string = bytes2string({0x81, 0xf6});
+    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::ARRAY);
+    JSON_TEST_ASSERT(j[0].is_null());
+
+    array_string = bytes2string({0x85, 0x01, 0x02, 0x03, 0x04, 0x05});
+    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::ARRAY);
+    JSON_STRING_ASSERT(j.stringify().c_str(), "[1, 2, 3, 4, 5]");
+
+    array_string = bytes2string({0x81, 0x81, 0x81, 0x80});
+    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::ARRAY);
+    JSON_STRING_ASSERT(j.stringify().c_str(), "[[[[]]]]");
+
+    array_string = bytes2string({0x82, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x41, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x42});
+    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::ARRAY);
+    JSON_STRING_ASSERT(j.stringify().c_str(), R"(["stringA", "stringB"])");
+
+    array_string = bytes2string({0x83, 0xFB, 0x40, 0x11, 0xD7, 0x0A, 0x3D, 0x70, 0xA3, 0xD7, 0xFB, 0xC1, 0x2E, 0x84, 0x7F, 0xCC, 0xCC, 0xCC, 0xCD, 0xFB, 0x3E, 0xB4, 0xB3, 0xFD, 0x59, 0x42, 0xCD, 0x96});
+    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::ARRAY);
+    JSON_FLOAT_ASSERT(j[0].number_value(), 4.46);
+    JSON_FLOAT_ASSERT(j[1].number_value(), -999999.9);
+    JSON_FLOAT_ASSERT(j[2].number_value(), 0.000001234);
+
+    auto object_string = bytes2string({0xa0});
+    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::OBJECT);
+    JSON_TEST_ASSERT(j.object_items().size() == 0);
+
+    object_string = bytes2string({0xa1, 0x61, 0x61, 0xa1, 0x61, 0x62, 0xa1, 0x61, 0x63, 0xa0});
+    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::OBJECT);
+    JSON_STRING_ASSERT(j.stringify().c_str(), R"({"a": {"b": {"c": {}}}})");
+
+    object_string = bytes2string({0xa2, 0x61, 0x61, 0x01, 0x61, 0x62, 0x82, 0x02, 0x03});
+    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::OBJECT);
+    JSON_STRING_ASSERT(j.stringify().c_str(), "{\"a\": 1, \"b\": [2, 3]}");
+
+    object_string = bytes2string({0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61, 0x65, 0x61, 0x45});
+    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j.type() == Json::OBJECT);
+    JSON_STRING_ASSERT(j.stringify().c_str(), "{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}");
+}
+
+void combo_test()
+{
+    std::ifstream ifs("../pass1.json");
+    string err;
+    string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    auto j_string = Json::parse(str, err);
+    JSON_TEST_ASSERT(err.empty());
+    ifs.close();
+    ifs.open("../pass1.cbor", std::ios_base::binary);
+    string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    auto j_binary = Json::parse(str2, err, JsonParseType::BINARY_STANDARD);
+    JSON_TEST_ASSERT(err.empty());
+    std::cout << j_binary.stringify() << std::endl;
+}
+
 int main(int, char **)
 {
     jsonp_test();
+    cborp_test();
+    combo_test();
 }
