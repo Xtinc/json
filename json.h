@@ -7,18 +7,19 @@
 #include <memory>
 #include <initializer_list>
 
-namespace JsonP
+namespace serialization
 {
     enum JsonParseType
     {
         STRING_STANDARD,
         STRING_COMMENTS,
-        BINARY_STANDARD
+        BINARY_STANDARD,
+        BINARY_EXTENTED
     };
 
     class JsonValue;
 
-    class Json final
+    class Json
     {
     public:
         enum Type
@@ -157,7 +158,6 @@ namespace JsonP
         std::unique_ptr<JsonValue> m_ptr;
     };
 
-    // Internal class hierarchy could be private.
     class JsonValue
     {
     protected:
