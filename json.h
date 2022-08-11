@@ -9,7 +9,7 @@
 
 namespace serialization
 {
-    enum JsonParseType
+    enum JsonFormat
     {
         STRING_STANDARD,
         STRING_COMMENTS,
@@ -67,8 +67,8 @@ namespace serialization
         // This prevents Json(some_pointer) from accidentally producing a bool
         Json(void *) = delete;
 
-        Json& operator=(const Json &json);
-        Json& operator=(Json &&json) noexcept;
+        Json &operator=(const Json &json);
+        Json &operator=(Json &&json) noexcept;
 
         // member function
 
@@ -98,23 +98,23 @@ namespace serialization
         Json &operator[](size_t i);
 
         // Serialize.
-        void stringify(std::string &out) const;
+        void stringify(std::string &out, JsonFormat strategy = JsonFormat::STRING_STANDARD) const;
 
-        std::string stringify() const
+        std::string stringify(JsonFormat strategy = JsonFormat::STRING_STANDARD) const
         {
             std::string out;
-            stringify(out);
+            stringify(out, strategy);
             return out;
         }
 
         // Parse. If parse fails, return Json() and assign an error message to err.
         static Json parse(const std::string &in,
                           std::string &err,
-                          JsonParseType strategy = JsonParseType::STRING_STANDARD);
+                          JsonFormat strategy = JsonFormat::STRING_STANDARD);
 
         static Json parse(const char *in,
                           std::string &err,
-                          JsonParseType strategy = JsonParseType::STRING_STANDARD)
+                          JsonFormat strategy = JsonFormat::STRING_STANDARD)
         {
             if (in)
             {
@@ -131,12 +131,12 @@ namespace serialization
             const std::string &in,
             std::string::size_type &parser_stop_pos,
             std::string &err,
-            JsonParseType strategy = JsonParseType::STRING_STANDARD);
+            JsonFormat strategy = JsonFormat::STRING_STANDARD);
 
         static inline std::vector<Json> parse_multi(
             const std::string &in,
             std::string &err,
-            JsonParseType strategy = JsonParseType::STRING_STANDARD)
+            JsonFormat strategy = JsonFormat::STRING_STANDARD)
         {
             std::string::size_type parser_stop_pos;
             return parse_multi(in, parser_stop_pos, err, strategy);

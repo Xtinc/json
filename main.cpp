@@ -197,57 +197,57 @@ void jsonp_test()
 
     string err_comment;
     auto json_comment = Json::parse(
-        comment_test, err_comment, JsonParseType::STRING_COMMENTS);
+        comment_test, err_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(!json_comment.is_null());
     JSON_TEST_ASSERT(err_comment.empty());
     JSON_TEST_ASSERT(json_comment["c"][1].int_value() == 2);
 
     comment_test = "{\"a\": 1}//trailing line comment";
     json_comment = Json::parse(
-        comment_test, err_comment, JsonParseType::STRING_COMMENTS);
+        comment_test, err_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(!json_comment.is_null());
     JSON_TEST_ASSERT(err_comment.empty());
 
     comment_test = "{\"a\": 1}/*trailing multi-line comment*/";
     json_comment = Json::parse(
-        comment_test, err_comment, JsonParseType::STRING_COMMENTS);
+        comment_test, err_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(!json_comment.is_null());
     JSON_TEST_ASSERT(err_comment.empty());
 
     string failing_comment_test = "{\n/* unterminated comment\n\"a\": 1,\n}";
     string err_failing_comment;
     auto json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
+        failing_comment_test, err_failing_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{\n/* unterminated trailing comment }";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
+        failing_comment_test, err_failing_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{\n/ / bad comment }";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
+        failing_comment_test, err_failing_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{// bad comment }";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
+        failing_comment_test, err_failing_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{\n\"a\": 1\n}/";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
+        failing_comment_test, err_failing_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
     failing_comment_test = "{/* bad\ncomment *}";
     json_failing_comment = Json::parse(
-        failing_comment_test, err_failing_comment, JsonParseType::STRING_COMMENTS);
+        failing_comment_test, err_failing_comment, JsonFormat::STRING_COMMENTS);
     JSON_TEST_ASSERT(json_failing_comment.is_null());
     JSON_TEST_ASSERT(!err_failing_comment.empty());
 
@@ -413,37 +413,37 @@ void cborp_test()
 
     string err;
     auto array_string = bytes2string({0x80});
-    auto j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    auto j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::ARRAY);
     JSON_TEST_ASSERT(j.array_items().empty());
 
     array_string = bytes2string({0x81, 0xf6});
-    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::ARRAY);
     JSON_TEST_ASSERT(j[0].is_null());
 
     array_string = bytes2string({0x85, 0x01, 0x02, 0x03, 0x04, 0x05});
-    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::ARRAY);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), "[1, 2, 3, 4, 5]");
 
     array_string = bytes2string({0x81, 0x81, 0x81, 0x80});
-    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::ARRAY);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), "[[[[]]]]");
 
     array_string = bytes2string({0x82, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x41, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x42});
-    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::ARRAY);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), R"(["stringA", "stringB"])");
 
     array_string = bytes2string({0x83, 0xFB, 0x40, 0x11, 0xD7, 0x0A, 0x3D, 0x70, 0xA3, 0xD7, 0xFB, 0xC1, 0x2E, 0x84, 0x7F, 0xCC, 0xCC, 0xCC, 0xCD, 0xFB, 0x3E, 0xB4, 0xB3, 0xFD, 0x59, 0x42, 0xCD, 0x96});
-    j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::ARRAY);
     JSON_FLOAT_ASSERT(j[0].number_value(), 4.46);
@@ -451,25 +451,25 @@ void cborp_test()
     JSON_FLOAT_ASSERT(j[2].number_value(), 0.000001234);
 
     auto object_string = bytes2string({0xa0});
-    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(object_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::OBJECT);
     JSON_TEST_ASSERT(j.object_items().empty());
 
     object_string = bytes2string({0xa1, 0x61, 0x61, 0xa1, 0x61, 0x62, 0xa1, 0x61, 0x63, 0xa0});
-    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(object_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::OBJECT);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), R"({"a": {"b": {"c": {}}}})");
 
     object_string = bytes2string({0xa2, 0x61, 0x61, 0x01, 0x61, 0x62, 0x82, 0x02, 0x03});
-    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(object_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::OBJECT);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), "{\"a\": 1, \"b\": [2, 3]}");
 
     object_string = bytes2string({0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61, 0x65, 0x61, 0x45});
-    j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
+    j = Json::parse(object_string, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::OBJECT);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), "{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}");
@@ -485,7 +485,7 @@ void combo_test()
     ifs.close();
     ifs.open("../pass1.cbor", std::ios_base::binary);
     string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    auto j_binary = Json::parse(str2, err, JsonParseType::BINARY_STANDARD);
+    auto j_binary = Json::parse(str2, err, JsonFormat::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j_string == j_binary);
     JSON_TEST_ASSERT(j_binary[8]["compact"][1].int_value() == 2);

@@ -2,6 +2,7 @@
 #define CODEC_H
 
 #include "templates.h"
+#include "json.h"
 #include <ctime>
 #include <cstring>
 #include <sstream>
@@ -510,35 +511,32 @@ namespace serialization
             }
             return len + sizeof(double);
         }
-        /*
-        size_t EncodeData(const JsonObj &t)
+        
+        size_t EncodeData(const Json &t)
         {
             size_t len = 0;
-            switch (t.m_eType)
+            switch (t.type())
             {
-            case JsonObj::ValueType::TYPE_INT:
-                len += EncodeData(t.m_iVal);
+            case Json::Type::NUMBER:
+                len += EncodeData(t.number_value());
                 break;
-            case JsonObj::ValueType::TYPE_FLT:
-                len += EncodeData(t.m_dVal);
+            case Json::Type::STRING:
+                len += EncodeData(t.string_value());
                 break;
-            case JsonObj::ValueType::TYPE_STR:
-                len += EncodeData(t.m_sVal);
+            case Json::Type::BOOL:
+                len += EncodeData(t.bool_value());
                 break;
-            case JsonObj::ValueType::TYPE_BOOL:
-                len += EncodeData(t.m_bVal);
+            case Json::Type::ARRAY:
+                len += EncodeData(t.array_items());
                 break;
-            case JsonObj::ValueType::TYPE_LIST:
-                len += EncodeData(t.m_vVal);
-                break;
-            case JsonObj::ValueType::TYPE_DICT:
-                len += EncodeData(t.m_mVal);
+            case Json::Type::OBJECT:
+                len += EncodeData(t.object_items());
                 break;
             default:
                 break;
             }
             return len;
-        }*/
+        }
         // EpochTime need fix!
         size_t EncodeData(const EpochTimeUs &t)
         {
