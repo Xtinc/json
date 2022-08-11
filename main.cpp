@@ -1,9 +1,7 @@
 #include <cassert>
 #include <string>
-#include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <sstream>
 #include <fstream>
 #include "json.h"
 #include <list>
@@ -13,9 +11,6 @@
 #include <type_traits>
 #include <cmath>
 
-#define JSON_TEST_CPP_PREFIX_CODE
-#define JSON_TEST_CPP_SUFFIX_CODE
-#define JSON_TEST_STANDALONE_MAIN 1
 #define JSON_TEST_ASSERT(b) assert(b)
 #define JSON_STRING_ASSERT(a, b) assert(strcmp(a, b) == 0)
 #define JSON_FLOAT_ASSERT(a, b) assert(fabs(a - b) < 1.0E-5)
@@ -188,8 +183,8 @@ void jsonp_test()
         for (const auto &tst : tests)
         {
             std::string::size_type parser_stop_pos;
-            std::string err;
-            auto res = Json::parse_multi(tst.input, parser_stop_pos, err);
+            std::string errmsg;
+            auto res = Json::parse_multi(tst.input, parser_stop_pos, errmsg);
             JSON_TEST_ASSERT(parser_stop_pos == tst.expect_parser_stop_pos);
             JSON_TEST_ASSERT(
                 (size_t)std::count_if(res.begin(), res.end(),
@@ -279,7 +274,7 @@ void cborp_test()
 {
     auto bytes2string = [](const bytesArray &bytes) -> string
     {
-        return string((char *)bytes.data(), bytes.size());
+        return {(char *)bytes.data(), bytes.size()};
     };
 
     string err;
@@ -287,7 +282,7 @@ void cborp_test()
     auto j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::ARRAY);
-    JSON_TEST_ASSERT(j.array_items().size() == 0);
+    JSON_TEST_ASSERT(j.array_items().empty());
 
     array_string = bytes2string({0x81, 0xf6});
     j = Json::parse(array_string, err, JsonParseType::BINARY_STANDARD);
@@ -325,7 +320,7 @@ void cborp_test()
     j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
     JSON_TEST_ASSERT(j.type() == Json::OBJECT);
-    JSON_TEST_ASSERT(j.object_items().size() == 0);
+    JSON_TEST_ASSERT(j.object_items().empty());
 
     object_string = bytes2string({0xa1, 0x61, 0x61, 0xa1, 0x61, 0x62, 0xa1, 0x61, 0x63, 0xa0});
     j = Json::parse(object_string, err, JsonParseType::BINARY_STANDARD);
@@ -358,7 +353,6 @@ void combo_test()
     string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     auto j_binary = Json::parse(str2, err, JsonParseType::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
-    std::cout << j_binary.stringify() << std::endl;
 }
 
 int main(int, char **)

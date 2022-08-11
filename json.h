@@ -66,8 +66,8 @@ namespace JsonP
         // This prevents Json(some_pointer) from accidentally producing a bool
         Json(void *) = delete;
 
-        Json operator=(const Json &json);
-        Json operator=(Json &&json) noexcept;
+        Json& operator=(const Json &json);
+        Json& operator=(Json &&json) noexcept;
 
         // member function
 

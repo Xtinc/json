@@ -427,7 +427,7 @@ namespace JsonP
         return i >= m_value.size() ? null_object.empty_json : m_value.at(i);
     }
 
-    Json Json::operator=(const Json &json)
+    Json &Json::operator=(const Json &json)
     {
         switch (json.type())
         {
@@ -454,7 +454,7 @@ namespace JsonP
         return *this;
     }
 
-    Json Json::operator=(Json &&json) noexcept
+    Json &Json::operator=(Json &&json) noexcept
     {
         m_ptr = move(json.m_ptr);
         return *this;
@@ -499,7 +499,7 @@ namespace JsonP
         {
             snprintf(buf, sizeof buf, "(%d)", c);
         }
-        return string(buf);
+        return buf;
     }
 
     inline bool in_range(long x, long lower, long upper)
@@ -528,7 +528,7 @@ namespace JsonP
 
             char ch = get_next_token();
             if (failed)
-                return Json();
+                return {};
 
             if (ch == '-' || (ch >= '0' && ch <= '9'))
             {
@@ -555,14 +555,14 @@ namespace JsonP
                 if (ch == '}')
                     return data;
 
-                while (1)
+                for (;;)
                 {
                     if (ch != '"')
                         return fail("expected '\"' in object, got " + esc(ch));
 
                     string key = parse_string();
                     if (failed)
-                        return Json();
+                        return {};
 
                     ch = get_next_token();
                     if (ch != ':')
@@ -570,7 +570,7 @@ namespace JsonP
 
                     data[std::move(key)] = parse_json(depth + 1);
                     if (failed)
-                        return Json();
+                        return {};
 
                     ch = get_next_token();
                     if (ch == '}')
@@ -590,12 +590,12 @@ namespace JsonP
                 if (ch == ']')
                     return data;
 
-                while (1)
+                for (;;)
                 {
                     i--;
                     data.push_back(parse_json(depth + 1));
                     if (failed)
-                        return Json();
+                        return {};
 
                     ch = get_next_token();
                     if (ch == ']')
@@ -989,6 +989,18 @@ namespace JsonP
             case DecodeStatus::TYPE:
                 parser_type();
                 break;
+            case DecodeStatus::STRING_SIZE:
+                parser_string_size(DecodeStatus::STRING_DATA);
+                break;
+            case DecodeStatus::BYTES_SIZE:
+                parser_string_size(DecodeStatus::BYTES_DATA);
+                break;
+            case DecodeStatus::OBJECT_SIZE:
+                parser_container_size(depth + 1, DecodeStatus::OBJECT_DATA);
+                break;
+            case DecodeStatus::ARRAY_SIZE:
+                parser_container_size(depth + 1, DecodeStatus::ARRAY_DATA);
+                break;
             case DecodeStatus::PINT:
                 return parser_pint();
             case DecodeStatus::NINT:
@@ -997,51 +1009,19 @@ namespace JsonP
                 return parser_float();
             case DecodeStatus::DOUBLE:
                 return parser_double();
-            case DecodeStatus::STRING_SIZE:
-                parser_string_size();
-                break;
-            case DecodeStatus::BYTES_SIZE:
-                parser_bytes_size();
-                break;
-            case DecodeStatus::STRING_DATA:
-            case DecodeStatus::BYTES_DATA:
-                return parser_string();
             case DecodeStatus::BOOL:
                 status = DecodeStatus::TYPE;
                 return (instant_num == 0x15);
             case DecodeStatus::NIL:
                 status = DecodeStatus::TYPE;
                 return {};
-            case DecodeStatus::OBJECT:
-            {
-                status = DecodeStatus::TYPE;
-                map<string, Json> data;
-                auto len = instant_num;
-                for (auto i = 0u; i < len; ++i)
-                {
-                    auto key = parser_json(depth + 1);
-                    if (key.type() != Json::STRING)
-                    {
-                        fail("Object key value is not string.");
-                        break;
-                    }
-                    data.insert(std::make_pair(key.string_value(), parser_json(depth + 1)));
-                }
-                return data;
-            }
-            break;
-            case DecodeStatus::ARRAY:
-            {
-                status = DecodeStatus::TYPE;
-                vector<Json> data;
-                data.reserve(instant_num);
-                auto len = instant_num;
-                for (auto i = 0u; i < len; ++i)
-                {
-                    data.push_back(parser_json(depth + 1));
-                }
-                return data;
-            }
+            case DecodeStatus::OBJECT_DATA:
+                return parser_object(depth + 1);
+            case DecodeStatus::ARRAY_DATA:
+                return parser_array(depth + 1);
+            case DecodeStatus::STRING_DATA:
+            case DecodeStatus::BYTES_DATA:
+                return parser_string();
             case DecodeStatus::ERROR:
             default:
                 return {};
@@ -1069,8 +1049,10 @@ namespace JsonP
             BYTES_DATA,
             STRING_SIZE,
             STRING_DATA,
-            ARRAY,
-            OBJECT,
+            ARRAY_SIZE,
+            ARRAY_DATA,
+            OBJECT_SIZE,
+            OBJECT_DATA,
             TAG,
             SPECIAL,
             BOOL,
@@ -1090,9 +1072,9 @@ namespace JsonP
         }
 
         template <typename T>
-        T fail(string &&msg, const T err_ret)
+        T fail(string &&msg, T &&err_ret)
         {
-            if (!status == DecodeStatus::ERROR)
+            if (status != DecodeStatus::ERROR)
             {
                 err = std::move(msg);
             }
@@ -1108,12 +1090,6 @@ namespace JsonP
         unsigned char get_byte()
         {
             return str.at(curidx++);
-        }
-
-        void copy_bytes(void *to, size_t n)
-        {
-            memcpy(to, (str.data() + curidx), n);
-            curidx += n;
         }
 
         unsigned short get_uint8()
@@ -1187,11 +1163,11 @@ namespace JsonP
             switch (major_type)
             {
             case 4:
-                status = DecodeStatus::ARRAY;
+                status = DecodeStatus::ARRAY_SIZE;
                 decompose_type(minor_type, minor_type, status);
                 break;
             case 5:
-                status = DecodeStatus::OBJECT;
+                status = DecodeStatus::OBJECT_SIZE;
                 decompose_type(minor_type, minor_type, status);
                 break;
             default:
@@ -1203,7 +1179,7 @@ namespace JsonP
         {
             if (!has_bytes(1))
             {
-                fail("not enough length!", "");
+                fail("not enough length!");
                 return;
             }
             auto type = get_byte();
@@ -1228,11 +1204,11 @@ namespace JsonP
                 decompose_type(minor_type, 0, DecodeStatus::STRING_DATA, minor_type);
                 break;
             case 4: // array
-                status = DecodeStatus::ARRAY;
+                status = DecodeStatus::ARRAY_SIZE;
                 decompose_type(minor_type, minor_type, status);
                 break;
             case 5: // map
-                status = DecodeStatus::OBJECT;
+                status = DecodeStatus::OBJECT_SIZE;
                 decompose_type(minor_type, minor_type, status);
                 break;
             case 6: // tag
@@ -1286,14 +1262,14 @@ namespace JsonP
             }
         }
 
-        void parser_bytes_size()
+        void parser_string_size(DecodeStatus st)
         {
             if (!has_bytes(curlen))
             {
                 fail("not enough length!", "");
                 return;
             }
-            status = DecodeStatus::BYTES_DATA;
+            status = st;
             switch (curlen)
             {
             case 0:
@@ -1312,30 +1288,47 @@ namespace JsonP
             }
         }
 
-        void parser_string_size()
+        void parser_container_size(int depth, DecodeStatus st)
         {
             if (!has_bytes(curlen))
             {
                 fail("not enough length!", "");
                 return;
             }
-            status = DecodeStatus::STRING_SIZE;
             switch (curlen)
             {
+            // instant number
             case 0:
-                curlen = instant_num;
                 break;
+                // u8
             case 1:
-                curlen = get_byte();
+                instant_num = get_byte();
                 break;
+                // u16
             case 2:
-            case 4:
-                curlen = get_uint8();
+                instant_num = get_uint8();
                 break;
+                // u32
+            case 4:
+                // todo :overflow
+                {
+                    auto temp = get_uint32();
+                    if (temp <= std::numeric_limits<int>::max())
+                    {
+                        instant_num = temp;
+                    }
+                    else
+                    {
+                        instant_num = fail("exceed integer range", std::numeric_limits<int>::max());
+                    }
+                }
+                break;
+                // u64
             case 8:
-                fail("extra long bytes", "");
+                instant_num = fail("exceed integer range", std::numeric_limits<int>::max());
                 break;
             }
+            status = st;
         }
 
         int parser_pint()
@@ -1363,8 +1356,8 @@ namespace JsonP
             case 4:
                 // todo :overflow
                 {
-                    auto temp = get_uint8();
-                    if (result <= std::numeric_limits<int>::max())
+                    auto temp = get_uint32();
+                    if (temp <= std::numeric_limits<int>::max())
                     {
                         result = temp;
                     }
@@ -1408,8 +1401,8 @@ namespace JsonP
             case 4:
                 // todo :overflow
                 {
-                    auto temp = get_uint8();
-                    if (result <= std::numeric_limits<int>::max())
+                    auto temp = get_uint32();
+                    if (temp <= std::numeric_limits<int>::max())
                     {
                         result = -static_cast<int>(temp) - 1;
                     }
@@ -1458,6 +1451,37 @@ namespace JsonP
             auto slice = str.substr(curidx, curlen);
             curidx += curlen;
             return slice;
+        }
+
+        std::map<string, Json> parser_object(int depth)
+        {
+            status = DecodeStatus::TYPE;
+            map<string, Json> data;
+            auto len = instant_num;
+            for (auto i = 0u; i < len; ++i)
+            {
+                auto key = parser_json(depth + 1);
+                if (key.type() != Json::STRING)
+                {
+                    fail("Object key value is not string: " + key.stringify());
+                    break;
+                }
+                data.insert(std::make_pair(key.string_value(), parser_json(depth + 1)));
+            }
+            return data;
+        }
+
+        std::vector<Json> parser_array(int depth)
+        {
+            status = DecodeStatus::TYPE;
+            vector<Json> data;
+            data.reserve(instant_num);
+            auto len = instant_num;
+            for (auto i = 0u; i < len; ++i)
+            {
+                data.push_back(parser_json(depth + 1));
+            }
+            return data;
         }
 
         void decompose_type(
