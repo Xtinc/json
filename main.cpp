@@ -887,6 +887,6 @@ int main(int, char **)
 {
     jsonp_test();
     cborp_test();
-    combo_test();
+    //combo_test();
     codec_test();
 }

@@ -1330,7 +1330,7 @@ namespace serialization
                 // todo :overflow
                 {
                     auto temp = get_uint32();
-                    if (temp <= std::numeric_limits<int>::max())
+                    if (temp <= (uint32_t)std::numeric_limits<int>::max())
                     {
                         instant_num = static_cast<int>(temp);
                     }
@@ -1374,7 +1374,7 @@ namespace serialization
                 // todo :overflow
                 {
                     auto temp = get_uint32();
-                    if (temp <= std::numeric_limits<int>::max())
+                    if (temp <= (uint32_t)std::numeric_limits<int>::max())
                     {
                         result = static_cast<int>(temp);
                     }
@@ -1419,7 +1419,7 @@ namespace serialization
                 // todo :overflow
                 {
                     auto temp = get_uint32();
-                    if (temp <= std::numeric_limits<int>::max())
+                    if (temp <= (uint32_t)std::numeric_limits<int>::max())
                     {
                         result = -static_cast<int>(temp) - 1;
                     }
@@ -1475,7 +1475,7 @@ namespace serialization
             status = DecodeStatus::TYPE;
             map<string, Json> data;
             auto len = instant_num;
-            for (auto i = 0u; i < len; ++i)
+            for (auto i = 0; i < len; ++i)
             {
                 auto key = parser_json(depth + 1);
                 if (key.type() != Json::STRING)
@@ -1494,7 +1494,7 @@ namespace serialization
             vector<Json> data;
             data.reserve(instant_num);
             auto len = instant_num;
-            for (auto i = 0u; i < len; ++i)
+            for (auto i = 0; i < len; ++i)
             {
                 data.push_back(parser_json(depth + 1));
             }

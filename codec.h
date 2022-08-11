@@ -623,10 +623,10 @@ namespace serialization
             switch (tag)
             {
             case details::ucPInt:
-                t = val;
+                t = static_cast<Type>(val);
                 break;
             case details::ucNInt:
-                t = -1 - static_cast<uint64_t>(val);
+                t = -1 - static_cast<Type>(val);
                 break;
             default:
                 err = 1;
