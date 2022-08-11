@@ -353,6 +353,8 @@ void combo_test()
     string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     auto j_binary = Json::parse(str2, err, JsonParseType::BINARY_STANDARD);
     JSON_TEST_ASSERT(err.empty());
+    JSON_TEST_ASSERT(j_string == j_binary);
+    JSON_TEST_ASSERT(j_binary[8]["compact"][1].int_value() == 2);
 }
 
 int main(int, char **)
