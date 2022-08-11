@@ -160,12 +160,12 @@ namespace serialization
             return *this;
         }
 
-        std::string GetStr() const
+        std::string data() const
         {
             return m_vBuf;
         }
 
-        // shouldn't be used unless u know what it means.
+        /* shouldn't be used unless u know what it means.
         void InsertRawDictHeader(int s)
         {
             // assert s is in range in unsigned int.
@@ -203,9 +203,9 @@ namespace serialization
             }
             m_pIter = m_vBuf.begin();
             m_pEnd = m_vBuf.end();
-        }
+        }*/
 
-        int GetErrCode() const
+        int error_number() const
         {
             return m_iErr;
         }
@@ -511,14 +511,17 @@ namespace serialization
             }
             return len + sizeof(double);
         }
-        
+
         size_t EncodeData(const Json &t)
         {
             size_t len = 0;
             switch (t.type())
             {
-            case Json::Type::NUMBER:
+            case Json::Type::FLOAT:
                 len += EncodeData(t.number_value());
+                break;
+            case Json::Type::INTEGER:
+                len += EncodeData(t.int_value());
                 break;
             case Json::Type::STRING:
                 len += EncodeData(t.string_value());

@@ -25,7 +25,8 @@ namespace serialization
         enum Type
         {
             NUL,
-            NUMBER,
+            FLOAT,
+            INTEGER,
             BOOL,
             STRING,
             ARRAY,
@@ -75,7 +76,7 @@ namespace serialization
         Type type() const;
 
         bool is_null() const { return type() == NUL; }
-        bool is_number() const { return type() == NUMBER; }
+        bool is_number() const { return type() == FLOAT; }
         bool is_bool() const { return type() == BOOL; }
         bool is_string() const { return type() == STRING; }
         bool is_array() const { return type() == ARRAY; }

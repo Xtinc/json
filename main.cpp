@@ -495,7 +495,7 @@ void codec_test()
     PREPARE_TEST
     {
         cbs << true << false;
-        EXPECT_CBOREQ(cbs.GetStr().c_str(), "f5 f4 ");
+        EXPECT_CBOREQ(cbs.data().c_str(), "f5 f4 ");
     }
     PREPARE_TEST
     {
@@ -503,7 +503,7 @@ void codec_test()
         {
             cbs << i;
         }
-        EXPECT_CBOREQ(cbs.GetStr(), "02 0e 18 19 18 38 18 f1 34 38 7b 24 39 13 fb 39 61 44 ");
+        EXPECT_CBOREQ(cbs.data(), "02 0e 18 19 18 38 18 f1 34 38 7b 24 39 13 fb 39 61 44 ");
         // 0x02,0x0e,0x1819,0x1838,0x18f1,0x34,0x387B,0x24,0x3913FB,0x396144
     }
 
@@ -514,7 +514,7 @@ void codec_test()
         {
             cbs << i;
         }
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "18 64 19 03 e8 19 27 10 1a 00 01 86 a0 38 63 3a 00 01 86 9f 3a 05 3d 99 37 ");
         // 0x1864,0x193e8,0x192710,0x1a0186a0,0x3863,0x3A0001869F,0x3A053D9937
     }
@@ -526,7 +526,7 @@ void codec_test()
         {
             cbs << i;
         }
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "1a b2 d0 5e 00 1b 00 00 00 69 54 3b 27 73 1b 00 00 0f ee 24 0e 45 7a 1b "
                       "06 0b d7 32 37 f2 48 57 3b 03 cf b1 10 03 74 8f a4 ");
         // 0x1AB2D05E00,0x1B00000069543B2773,0x1B00000FEE240E457A,0x1B060BD73237F24857,0x3B03CFB11003748FA4
@@ -539,7 +539,7 @@ void codec_test()
         {
             cbs << i;
         }
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "fa 3d 9a 6b 51 fa 42 08 7a e1 fa 40 ff 8d 50 fa c7 35 f7 76 fa c5 2b 6d 9a ");
         // 0xfa3d9a6b51,0xFA42087AE1,0xFA40FF8D50,0xFAC735F776,0xFAC52B6D9A
     }
@@ -550,7 +550,7 @@ void codec_test()
         {
             cbs << i;
         }
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "fb 3f 48 b5 02 ab ab ea d5 fb 40 41 0f 5c 28 f5 c2 8f fb 40 1f f2 23 ce 10 6e b8 fb "
                       "42 8f b3 24 7f f5 3b ba fb c2 19 93 c1 7d fb 61 9e ");
         // 0xFB3F48B502ABABEAD5,0xFB40410F5C28F5C28F,0xFB401FF223CE106EB8,0xFB428FB3247FF53BBA,0xFBC21993C17DFB619E
@@ -563,7 +563,7 @@ void codec_test()
             cbs << i;
         }
         cbs << std::string("lvaue");
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "68 30 2e 30 30 30 37 35 34 67 33 61 64 34 66 31 32 65 62 68 64 73 66 69 30 78 61 73 68 64 "
                       "67 6f 78 60 65 6c 76 61 75 65 ");
         // 0x68302E303030373534
@@ -578,7 +578,7 @@ void codec_test()
     {
         std::vector<unsigned char> tp{0x80, 0x81, 0x82, 0x83, 0xFF};
         cbs << tp;
-        EXPECT_CBOREQ(cbs.GetStr(), "45 80 81 82 83 ff ");
+        EXPECT_CBOREQ(cbs.data(), "45 80 81 82 83 ff ");
     }
 
     PREPARE_TEST
@@ -591,7 +591,7 @@ void codec_test()
         cbs << p;
         std::string str("ceshisdf");
         cbs << str << "lvaue";
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "68 30 2e 30 30 30 37 35 34 67 33 61 64 34 66 31 32 65 62 68 64 73 66 69 30 78 61 73 68 64 "
                       "67 6f 78 60 66 77 65 72 74 74 74 68 63 65 73 68 69 73 64 66 65 6c 76 61 75 65 ");
     }
@@ -609,7 +609,7 @@ void codec_test()
         // 0x84646365686967333238343664656871756575646276666C255E34353234332A2A262F6E
         cbs << std::vector<unsigned char>{'a', 'b', 'c', 'd'};
         // 0x844161416241634164
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "85 01 02 03 04 05 85 01 02 03 04 05 83 fb 40 14 39 58 10 62 4d d3 fb 40 14 39 58 10 62 4d d3 fb 40 14 39 58 "
                       "10 62 4d d3 84 64 63 65 68 69 67 33 32 38 34 36 64 65 68 71 75 65 75 64 62 76 66 6c 25 5e 34 35 32 34 33 2a "
                       "2a 26 2f 6e 44 61 62 63 64 ");
@@ -630,7 +630,7 @@ void codec_test()
         mp3.insert(std::make_pair("test2", a2));
         mp3.insert(std::make_pair("test3", a3));
         cbs << mp1 << mp3;
-        EXPECT_CBOREQ(cbs.GetStr(),
+        EXPECT_CBOREQ(cbs.data(),
                       "a3 01 02 02 02 03 18 38 a3 65 74 65 73 74 31 83 1a 00 0b f1 90 18 7b 3a 00 05 3c c9 65 74 65 73 74 32 83 1a "
                       "00 01 7e b1 39 5b 7f 39 30 48 65 74 65 73 74 33 83 19 04 bc 39 03 dc 00 ");
         cbs << pp;
@@ -640,7 +640,7 @@ void codec_test()
     {
         cbs << "[1,[1,2]]"
             << "ceshi" << std::vector<double>{1.2, 2.3, 3.4};
-        EXPECT_CBOREQ(cbs.GetStr(), "69 5b 31 2c 5b 31 2c 32 5d 5d 65 63 65 73 68 69 83 fb 3f f3 33 33 33 33 33 33 fb 40 02 66 66 66 66 "
+        EXPECT_CBOREQ(cbs.data(), "69 5b 31 2c 5b 31 2c 32 5d 5d 65 63 65 73 68 69 83 fb 3f f3 33 33 33 33 33 33 fb 40 02 66 66 66 66 "
                                     "66 66 fb 40 0b 33 33 33 33 33 33 ");
     }
 
@@ -648,7 +648,7 @@ void codec_test()
     {
         test_encoder_stream_io sio(1, 2, 3.5, "cesiashdka");
         cbs << sio;
-        EXPECT_CBOREQ(cbs.GetStr(), "6f 31 32 33 2e 35 63 65 73 69 61 73 68 64 6b 61 ");
+        EXPECT_CBOREQ(cbs.data(), "6f 31 32 33 2e 35 63 65 73 69 61 73 68 64 6b 61 ");
     }
 
     PREPARE_TEST
@@ -854,7 +854,17 @@ void codec_test()
     }
 
     {
-        TestReflect::Point p1{1, 2, {1.1, 2.1, 3, 4, 5}, "point1"};
+        auto j = Json(Json::array{1, 2, 3, 4, 5});
+        CborStream cbs;
+        cbs << j;
+        string err;
+        auto j2 = Json::parse(cbs.data(), err, JsonFormat::BINARY_STANDARD);
+        EXPECT_EQ(j, j2);
+        std::cout << j2.stringify() << std::endl;
+    }
+
+    {
+        TestReflect::Point p1{1, 2, {1.1, 2.1345555, 3.08E+10, 4, 5}, "point1"};
         TestReflect::Point p2{3, 5, {1, 1.9, 1, 1.09, 1}, "point2"};
         TestReflect::Point p3{-1, -2, {10, 9.1, 6, 4.77, 2}, "point3"};
         TestReflect::Rect rect1{p1, std::vector<TestReflect::Point>{p1, p2}, 0xffff};
@@ -866,7 +876,9 @@ void codec_test()
         CborStream cbs;
         cbs << box;
         string err;
-        auto j = Json::parse(cbs.GetStr(), err, JsonFormat::BINARY_STANDARD);
+        auto j = Json::parse(cbs.data(), err, JsonFormat::BINARY_STANDARD);
+        EXPECT_STRING_EQUAL(j["Boxtype"].string_value().c_str(), "none");
+        EXPECT_EQ(j["faces"]["left face"]["plist"][1]["x"], 3);
         std::cout << j.stringify() << std::endl;
     }
 }

@@ -33,7 +33,7 @@ namespace serialization
         if (std::isfinite(value))
         {
             char buf[32];
-            snprintf(buf, sizeof buf, "%.17g", value);
+            snprintf(buf, sizeof buf, "%g", value);
             out += buf;
         }
         else
@@ -153,7 +153,7 @@ namespace serialization
         {
             CborStream cbs;
             cbs << *this;
-            out = cbs.GetStr();
+            out = cbs.data();
         }
         break;
         default:
@@ -194,7 +194,7 @@ namespace serialization
         T m_value;
     };
 
-    class JsonDouble final : public Value<Json::NUMBER, double>
+    class JsonDouble final : public Value<Json::FLOAT, double>
     {
         double number_value() const override { return m_value; }
 
@@ -208,7 +208,7 @@ namespace serialization
         explicit JsonDouble(double value) : Value(value) {}
     };
 
-    class JsonInt final : public Value<Json::NUMBER, int>
+    class JsonInt final : public Value<Json::FLOAT, int>
     {
         double number_value() const override { return m_value; }
 
@@ -304,7 +304,7 @@ namespace serialization
         case Type::BOOL:
             m_ptr = make_unique<JsonBoolean>(json.bool_value());
             break;
-        case Type::NUMBER:
+        case Type::FLOAT:
             m_ptr = make_unique<JsonDouble>(json.number_value());
             break;
         case Type::OBJECT:
@@ -447,7 +447,7 @@ namespace serialization
         case Type::BOOL:
             m_ptr = make_unique<JsonBoolean>(json.bool_value());
             break;
-        case Type::NUMBER:
+        case Type::FLOAT:
             m_ptr = make_unique<JsonDouble>(json.number_value());
             break;
         case Type::OBJECT:
