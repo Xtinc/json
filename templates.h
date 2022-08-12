@@ -2,20 +2,10 @@
 #define TEMPLATES_H
 
 #include <array>
-#include <climits>
-#include <deque>
-#include <forward_list>
-#include <list>
-#include <map>
-#include <queue>
-#include <set>
-#include <stack>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-#include <memory>
 #include <functional>
+#include <memory>
+#include <string>
+#include <tuple>
 
 template <typename T>
 struct EnumMetaInfo
@@ -193,7 +183,6 @@ namespace serialization
 #ifdef __cpp_lib_make_unique
     using std::make_unique;
 #else
-
     template <class T, class... Args>
     typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
     make_unique(Args &&...args)
@@ -212,81 +201,108 @@ namespace serialization
     typename std::enable_if<details::is_bounded_array<T>::value>::type make_unique(Args &&...) = delete;
 
 #endif
-    // second part is an implement for classify containers.
+    // second part is an implement for classify containers and which depends on above.
 
     namespace details
     {
+        // Check a container is a stl array like(list or map.)
         template <typename T>
-        struct is_stl_list : std::false_type
+        struct is_stl_array_like_impl
         {
-        };
-        template <typename Args, size_t N>
-        struct is_stl_list<std::array<Args, N>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_list<std::vector<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_list<std::deque<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_list<std::list<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_list<std::forward_list<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_list<std::stack<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_list<std::queue<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_list<std::priority_queue<Args...>> : std::true_type
-        {
+            using type = remove_const_t<T>;
+
+            template <typename A>
+            static constexpr bool check(
+                A *pt,
+                A const *cpt = nullptr,
+                decltype(pt->begin()) * = nullptr,
+                decltype(pt->end()) * = nullptr,
+                decltype(cpt->begin()) * = nullptr,
+                decltype(cpt->end()) * = nullptr,
+                typename A::iterator *pi = nullptr,
+                typename A::const_iterator *pci = nullptr,
+                typename A::value_type *pv = nullptr)
+            {
+                using iterator = A::iterator;
+                using const_iterator = A::const_iterator;
+                using value_type = A::value_type;
+                return std::is_same<decltype(pt->begin()), iterator>::value &&
+                       std::is_same<decltype(pt->end()), iterator>::value &&
+                       std::is_same<decltype(cpt->begin()), const_iterator>::value &&
+                       std::is_same<decltype(cpt->end()), const_iterator>::value &&
+                       std::is_same<decltype(**pi), value_type &>::value &&
+                       std::is_same<decltype(**pci), value_type const &>::value;
+            }
+
+            template <typename A>
+            static constexpr bool check(...)
+            {
+                return false;
+            }
+
+            static const bool value = check<type>(nullptr);
         };
 
+        // Check a container is a stl map like
         template <typename T>
-        struct is_stl_map : std::false_type
+        struct is_stl_map_like_impl
         {
-        };
-        template <typename... Args>
-        struct is_stl_map<std::map<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_map<std::multimap<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_map<std::unordered_map<Args...>> : std::true_type
-        {
-        };
-        template <typename... Args>
-        struct is_stl_map<std::unordered_multimap<Args...>> : std::true_type
-        {
+            using type = remove_const_t<T>;
+
+            template <typename A>
+            static constexpr bool check(
+                A *pt,
+                A const *cpt = nullptr,
+                decltype(pt->begin()) * = nullptr,
+                decltype(pt->end()) * = nullptr,
+                decltype(cpt->begin()) * = nullptr,
+                decltype(cpt->end()) * = nullptr,
+                typename A::iterator *pi = nullptr,
+                typename A::const_iterator *pci = nullptr,
+                typename A::key_type *pk = nullptr,
+                typename A::mapped_type *pm = nullptr,
+                typename A::value_type *pv = nullptr)
+            {
+                using iterator = A::iterator;
+                using const_iterator = A::const_iterator;
+                using key_type = A::key_type;
+                using value_type = A::value_type;
+                using key_type = A::key_type;
+                using mapped_type = A::mapped_type;
+                return std::is_same<decltype(pt->begin()), iterator>::value &&
+                       std::is_same<decltype(pt->end()), iterator>::value &&
+                       std::is_same<decltype(cpt->begin()), const_iterator>::value &&
+                       std::is_same<decltype(cpt->end()), const_iterator>::value &&
+                       std::is_same<decltype(**pi), value_type &>::value &&
+                       std::is_same<decltype(**pci), value_type const &>::value &&
+                       std::is_same<value_type, std::pair<const key_type, mapped_type>>::value;
+            }
+
+            template <typename A>
+            static constexpr bool check(...)
+            {
+                return false;
+            }
+
+            static const bool value = check<type>(nullptr);
         };
 
         template <typename T, typename = void_t<>>
         struct is_signed_char_container : std::false_type
         {
         };
+
         template <typename T>
         struct is_signed_char_container<T, typename std::enable_if<std::is_same<typename T::value_type, char>::value>::type>
             : std::true_type
         {
         };
+
         template <typename T, typename = void_t<>>
         struct is_unsigned_char_container : std::false_type
         {
         };
+
         template <typename T>
         struct is_unsigned_char_container<T,
                                           typename std::enable_if<std::is_same<typename T::value_type, unsigned char>::value>::type> : std::true_type
@@ -315,13 +331,6 @@ namespace serialization
             return {{std::move(a[I])...}};
         }
 
-        template <typename F, typename... Ts, std::size_t... Is>
-        void foreach_in_list(const std::tuple<Ts...> &tuple, F func, index_sequence<Is...>)
-        {
-            using expander = int[];
-            (void)expander{0, ((void)func(std::get<Is>(tuple)), 0)...};
-        }
-
         // for tempalte in-consistency with MSVC
         template <bool, typename T>
         struct SwitchFuncType
@@ -335,6 +344,9 @@ namespace serialization
         };
     } // namespace details
 
+#ifdef __cpp_lib_to_array
+    using std::to_array;
+#else
     template <typename T, size_t N>
     constexpr std::array<T, N> to_array(T (&a)[N])
     {
@@ -346,13 +358,8 @@ namespace serialization
     {
         return details::to_array_impl<remove_cv_t<T>, T, N>(std::move(a), make_index_sequence<N>{});
     }
-
-    template <typename F, typename... Ts>
-    void foreach_in_list(const std::tuple<Ts...> &tuple, F func)
-    {
-        details::foreach_in_list(tuple, func, make_index_sequence<sizeof...(Ts)>());
-    }
-
+#endif
+ 
     template <typename KeyType, typename ValueType, typename Comp = std::equal_to<KeyType>>
     typename std::enable_if<!std::is_function<ValueType>::value, ValueType>::type GenericSwitch(const KeyType &key,
                                                                                                 const std::initializer_list<std::pair<KeyType, ValueType>> &sws, Comp default_cmp = Comp())
@@ -385,37 +392,40 @@ namespace serialization
 
     // STL list
     template <typename T>
-    struct ISTList
+    struct is_stl_array_like
     {
-        static constexpr bool const value = details::is_stl_list<typename std::decay<T>::type>::value;
+        static constexpr bool const value = details::is_stl_array_like_impl<T>::value && (!details::is_stl_map_like_impl<T>::value);
     };
+    
     // STL map
     template <typename T>
-    struct ISTLmap
+    struct is_stl_map_like
     {
-        static constexpr bool const value = details::is_stl_map<typename std::decay<T>::type>::value;
+        static constexpr bool const value = details::is_stl_map_like_impl<T>::value;
     };
+    
     // containers have char
     template <typename T>
-    struct IsSCharContainer
+    struct is_signed_container
     {
         static constexpr bool const value = details::is_signed_char_container<T>::value;
     };
+
     // containers have unsigned
     template <typename T>
-    struct IsUCharContainer
+    struct is_unsigned_container
     {
         static constexpr bool const value = details::is_unsigned_char_container<T>::value;
     };
+
     // containers have overloaded operator <<
     template <typename T>
-    struct IsOverloadedOperator
+    struct is_overloaded_operator
     {
         static constexpr bool const value = details::is_overloaded_operator<T>::value;
     };
 
     // reflection
-
     template <typename T, typename Fields, typename F, size_t... Is>
     void reflect_foreach(T &&obj, Fields &&fields, F &&f, index_sequence<Is...>)
     {
@@ -432,13 +442,12 @@ namespace serialization
     }
 
     template <typename T>
-    struct IsReflectedObject
+    struct is_relected_object
     {
         static constexpr bool const value = std::tuple_size<decltype(StructMetaInfo<T>::Info())>::value != 0;
     };
 
     // enumeration
-
     template <typename E>
     std::string enum_to_string(const E &e)
     {

@@ -42,32 +42,6 @@ namespace serialization
         constexpr uint64_t ucMaskL = 0x1fu; // the last 5 bits.
     }                                       // namespace details
 
-    class EpochTimeUs
-    {
-    public:
-        explicit EpochTimeUs(uint64_t t) : m_ullEpochTimeUs(t) {}
-
-        void SetTime(const std::string &t)
-        {
-            std::tm time = {};
-            sscanf(t.c_str(), "%04d-%02d-%02dT%02d:%02d:%02d", &time.tm_year, &time.tm_mon, &time.tm_mday, &time.tm_hour,
-                   &time.tm_min, &time.tm_sec);
-            time.tm_year -= 1900;
-            time.tm_mon -= 1;
-            m_ullEpochTimeUs = std::mktime(&time) * 1000000;
-        }
-
-        unsigned long long GetEpochTime() const
-        {
-            return m_ullEpochTimeUs;
-        }
-
-        std::string PrintEpochTime() const;
-
-    private:
-        unsigned long long m_ullEpochTimeUs;
-    };
-
     class CborStream
     {
     private:
@@ -103,7 +77,7 @@ namespace serialization
         };
 
         template <typename T>
-        struct encode_each_in_reflected_helper<T, enable_if_t<IsReflectedObject<decay_t<T>>::value>>
+        struct encode_each_in_reflected_helper<T, enable_if_t<is_relected_object<decay_t<T>>::value>>
         {
             static void apply(T &&obj, CborStream &cbs, size_t &len, const char *fieldName = "")
             {
@@ -160,7 +134,7 @@ namespace serialization
             return *this;
         }
 
-        std::string data() const
+        std::string GetData() const
         {
             return m_vBuf;
         }
@@ -205,12 +179,12 @@ namespace serialization
             m_pEnd = m_vBuf.end();
         }*/
 
-        int error_number() const
+        int GetErrNum() const
         {
             return m_iErr;
         }
 
-        void clear()
+        void ClearData()
         {
             m_vBuf.clear();
             m_pIter = m_vBuf.begin();
@@ -540,29 +514,6 @@ namespace serialization
             }
             return len;
         }
-        // EpochTime need fix!
-        size_t EncodeData(const EpochTimeUs &t)
-        {
-            auto len = EncodeDirectly(details::ucSemantic, details::ucDataTime);
-            return len + EncodeData(t.PrintEpochTime());
-        }
-
-        size_t DecodeData(EpochTimeUs &t, int &err)
-        {
-            err = 0;
-            auto tag = details::ucUndefined;
-            auto value = details::ucUndefined;
-            auto len = DecodeTagAndValue(tag, value, err);
-            if (tag != details::ucSemantic || value != details::ucDataTime)
-            {
-                err = 1; // type error!
-                return 0;
-            }
-            std::string time;
-            len += DecodeData(time, err);
-            t.SetTime(time);
-            return len;
-        }
 
         template <typename Type>
         enable_if_t<std::is_enum<Type>::value, std::size_t> EncodeData(const Type &t)
@@ -636,7 +587,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<IsSCharContainer<Type>::value, std::size_t> EncodeData(const Type &t)
+        enable_if_t<is_signed_container<Type>::value, std::size_t> EncodeData(const Type &t)
         {
             auto len = EncodeTagAndValue(details::uctStr, t.size());
             m_vBuf.insert(std::end(m_vBuf), std::begin(t), std::end(t));
@@ -644,7 +595,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<IsSCharContainer<Type>::value, std::size_t> DecodeData(Type &t, int &err)
+        enable_if_t<is_signed_container<Type>::value, std::size_t> DecodeData(Type &t, int &err)
         {
             err = 0;
             auto tag = details::ucUndefined;
@@ -667,7 +618,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<IsUCharContainer<Type>::value, std::size_t> EncodeData(const Type &t)
+        enable_if_t<is_unsigned_container<Type>::value, std::size_t> EncodeData(const Type &t)
         {
             auto len = EncodeTagAndValue(details::ucbStr, t.size());
             m_vBuf.insert(std::end(m_vBuf), std::begin(t), std::end(t));
@@ -675,7 +626,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<IsUCharContainer<Type>::value, std::size_t> DecodeData(Type &t, int &err)
+        enable_if_t<is_unsigned_container<Type>::value, std::size_t> DecodeData(Type &t, int &err)
         {
             err = 0;
             auto tag = details::ucUndefined;
@@ -698,7 +649,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!IsSCharContainer<Type>::value && !IsUCharContainer<Type>::value && ISTList<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_array_like<Type>::value, std::size_t>
         EncodeData(const Type &t)
         {
             auto len = EncodeTagAndValue(details::ucArray, t.size());
@@ -710,7 +661,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!IsSCharContainer<Type>::value && !IsUCharContainer<Type>::value && ISTList<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_array_like<Type>::value, std::size_t>
         DecodeData(Type &t, int &err)
         {
             err = 0;
@@ -732,7 +683,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!IsSCharContainer<Type>::value && !IsUCharContainer<Type>::value && ISTLmap<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_map_like<Type>::value, std::size_t>
         EncodeData(const Type &t)
         {
             auto len = EncodeTagAndValue(details::ucMap, t.size());
@@ -744,7 +695,7 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!IsSCharContainer<Type>::value && !IsUCharContainer<Type>::value && ISTLmap<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_map_like<Type>::value, std::size_t>
         DecodeData(Type &t, int &err)
         {
             err = 0;
@@ -768,8 +719,8 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!std::is_fundamental<Type>::value && !IsSCharContainer<Type>::value && !IsUCharContainer<Type>::value &&
-                        IsReflectedObject<Type>::value,
+        enable_if_t<!std::is_fundamental<Type>::value && !is_signed_container<Type>::value && !is_unsigned_container<Type>::value &&
+                        is_relected_object<Type>::value,
                     std::size_t>
         EncodeData(const Type &t)
         {
@@ -779,8 +730,8 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!std::is_fundamental<Type>::value && !std::is_enum<Type>::value && !IsSCharContainer<Type>::value &&
-                        !IsUCharContainer<Type>::value && IsOverloadedOperator<Type>::value,
+        enable_if_t<!std::is_fundamental<Type>::value && !std::is_enum<Type>::value && !is_signed_container<Type>::value &&
+                        !is_unsigned_container<Type>::value &&!is_relected_object<Type>::value&& is_overloaded_operator<Type>::value,
                     std::size_t>
         EncodeData(const Type &t)
         {

@@ -152,7 +152,7 @@ namespace serialization
         {
             CborStream cbs;
             cbs << *this;
-            out = cbs.data();
+            out = cbs.GetData();
         }
         break;
         default:
@@ -569,10 +569,10 @@ namespace serialization
 
             if (ch == '{')
             {
-                map<string, Json> data;
+                map<string, Json> GetData;
                 ch = get_next_token();
                 if (ch == '}')
-                    return data;
+                    return GetData;
 
                 for (;;)
                 {
@@ -587,7 +587,7 @@ namespace serialization
                     if (ch != ':')
                         return fail("expected ':' in object, got " + esc(ch));
 
-                    data[std::move(key)] = parse_json(depth + 1);
+                    GetData[std::move(key)] = parse_json(depth + 1);
                     if (failed)
                         return {};
 
@@ -599,20 +599,20 @@ namespace serialization
 
                     ch = get_next_token();
                 }
-                return data;
+                return GetData;
             }
 
             if (ch == '[')
             {
-                vector<Json> data;
+                vector<Json> GetData;
                 ch = get_next_token();
                 if (ch == ']')
-                    return data;
+                    return GetData;
 
                 for (;;)
                 {
                     i--;
-                    data.push_back(parse_json(depth + 1));
+                    GetData.push_back(parse_json(depth + 1));
                     if (failed)
                         return {};
 
@@ -625,7 +625,7 @@ namespace serialization
                     ch = get_next_token();
                     (void)ch;
                 }
-                return data;
+                return GetData;
             }
 
             return fail("expected value, got " + esc(ch));
@@ -1472,7 +1472,7 @@ namespace serialization
         std::map<string, Json> parser_object(int depth)
         {
             status = DecodeStatus::TYPE;
-            map<string, Json> data;
+            map<string, Json> GetData;
             auto len = instant_num;
             for (auto i = 0; i < len; ++i)
             {
@@ -1482,22 +1482,22 @@ namespace serialization
                     fail("Object key value is not string: " + key.stringify());
                     break;
                 }
-                data.insert(std::make_pair(key.string_value(), parser_json(depth + 1)));
+                GetData.insert(std::make_pair(key.string_value(), parser_json(depth + 1)));
             }
-            return data;
+            return GetData;
         }
 
         std::vector<Json> parser_array(int depth)
         {
             status = DecodeStatus::TYPE;
-            vector<Json> data;
-            data.reserve(instant_num);
+            vector<Json> GetData;
+            GetData.reserve(instant_num);
             auto len = instant_num;
             for (auto i = 0; i < len; ++i)
             {
-                data.push_back(parser_json(depth + 1));
+                GetData.push_back(parser_json(depth + 1));
             }
-            return data;
+            return GetData;
         }
 
         void decompose_type(
