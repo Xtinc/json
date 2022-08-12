@@ -141,9 +141,21 @@ namespace serialization
 
     } // namespace details
 
+#ifdef __cpp_lib_void_t
+    using std::void_t;
+#else
     template <typename... T>
     using void_t = typename details::make_void<T...>::type;
+#endif
 
+#ifdef __cpp_lib_transformation_trait_aliases
+    using std::decay_t;
+    using std::enable_if_t;
+    using std::remove_const_t;
+    using std::remove_cv_t;
+    using std::remove_reference_t;
+    using std::underlying_type_t;
+#else
     template <typename... T>
     using decay_t = typename std::decay<T...>::type;
 
@@ -161,10 +173,13 @@ namespace serialization
 
     template <typename T>
     using underlying_type_t = typename std::underlying_type<T>::type;
+#endif
 
-    template <class T>
-    using unwarp_decay_t = typename details::unwarp_refwrapper<typename std::decay<T>::type>::type;
-
+#ifdef __cpp_lib_integer_sequence
+    using std::index_sequence;
+    using std::index_sequence_for;
+    using std::make_index_sequence;
+#else
     template <std::size_t... Ints>
     using index_sequence = details::integer_sequence<std::size_t, Ints...>;
 
@@ -173,6 +188,11 @@ namespace serialization
 
     template <class... T>
     using index_sequence_for = make_index_sequence<sizeof...(T)>;
+#endif
+
+#ifdef __cpp_lib_make_unique
+    using std::make_unique;
+#else
 
     template <class T, class... Args>
     typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
@@ -191,6 +211,7 @@ namespace serialization
     template <class T, class... Args>
     typename std::enable_if<details::is_bounded_array<T>::value>::type make_unique(Args &&...) = delete;
 
+#endif
     // second part is an implement for classify containers.
 
     namespace details
