@@ -14,6 +14,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <memory>
+#include <functional>
 
 template <typename T>
 struct EnumMetaInfo
@@ -35,6 +37,7 @@ struct StructMetaInfo
 
 namespace serialization
 {
+    // first part is an implement for some CPP14 templates.
     namespace details
     {
         // void_t
@@ -56,6 +59,28 @@ namespace serialization
         struct unwarp_refwrapper<std::reference_wrapper<T>>
         {
             using type = T &;
+        };
+
+        // for make_unique
+
+        template <typename T>
+        struct is_unbounded_array : public std::false_type
+        {
+        };
+
+        template <typename T>
+        struct is_unbounded_array<T[]> : public std::true_type
+        {
+        };
+
+        template <typename T>
+        struct is_bounded_array : public std::false_type
+        {
+        };
+
+        template <typename T, std::size_t N>
+        struct is_bounded_array<T[N]> : public std::true_type
+        {
         };
 
         // index_sequence
@@ -148,6 +173,25 @@ namespace serialization
 
     template <class... T>
     using index_sequence_for = make_index_sequence<sizeof...(T)>;
+
+    template <class T, class... Args>
+    typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+    make_unique(Args &&...args)
+    {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
+
+    template <class T, class... Args>
+    typename std::enable_if<details::is_unbounded_array<T>::value, std::unique_ptr<T>>::type
+    make_unique(std::size_t n)
+    {
+        return std::unique_ptr<T>(new typename std::remove_extent<T>::type[n]());
+    }
+
+    template <class T, class... Args>
+    typename std::enable_if<details::is_bounded_array<T>::value>::type make_unique(Args &&...) = delete;
+
+    // second part is an implement for classify containers.
 
     namespace details
     {
@@ -250,6 +294,24 @@ namespace serialization
             return {{std::move(a[I])...}};
         }
 
+        template <typename F, typename... Ts, std::size_t... Is>
+        void foreach_in_list(const std::tuple<Ts...> &tuple, F func, index_sequence<Is...>)
+        {
+            using expander = int[];
+            (void)expander{0, ((void)func(std::get<Is>(tuple)), 0)...};
+        }
+
+        // for tempalte in-consistency with MSVC
+        template <bool, typename T>
+        struct SwitchFuncType
+        {
+        };
+
+        template <typename T>
+        struct SwitchFuncType<true, T>
+        {
+            using RetType = typename std::function<T>::result_type;
+        };
     } // namespace details
 
     template <typename T, size_t N>
@@ -262,6 +324,42 @@ namespace serialization
     constexpr std::array<T, N> to_array(T (&&a)[N]) noexcept
     {
         return details::to_array_impl<remove_cv_t<T>, T, N>(std::move(a), make_index_sequence<N>{});
+    }
+
+    template <typename F, typename... Ts>
+    void foreach_in_list(const std::tuple<Ts...> &tuple, F func)
+    {
+        details::foreach_in_list(tuple, func, make_index_sequence<sizeof...(Ts)>());
+    }
+
+    template <typename KeyType, typename ValueType, typename Comp = std::equal_to<KeyType>>
+    typename std::enable_if<!std::is_function<ValueType>::value, ValueType>::type GenericSwitch(const KeyType &key,
+                                                                                                const std::initializer_list<std::pair<KeyType, ValueType>> &sws, Comp default_cmp = Comp())
+    {
+        for (const auto &pair : sws)
+        {
+            if (default_cmp(key, pair.first))
+            {
+                return pair.second;
+            }
+        }
+        return {};
+    }
+
+    template <typename KeyType, typename Signature, typename Comp = std::less<KeyType>>
+    typename std::enable_if<std::is_function<Signature>::value,
+                            typename details::SwitchFuncType<std::is_function<Signature>::value, Signature>::RetType>::type
+    GenericSwitch(const KeyType &key, const std::initializer_list<std::pair<KeyType, std::function<Signature>>> &sws,
+                  Comp default_cmp = Comp())
+    {
+        for (const auto &pair : sws)
+        {
+            if (default_cmp(key, pair.first))
+            {
+                return (pair.second)();
+            }
+        }
+        return {};
     }
 
     // STL list

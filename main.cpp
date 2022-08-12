@@ -641,7 +641,7 @@ void codec_test()
         cbs << "[1,[1,2]]"
             << "ceshi" << std::vector<double>{1.2, 2.3, 3.4};
         EXPECT_CBOREQ(cbs.data(), "69 5b 31 2c 5b 31 2c 32 5d 5d 65 63 65 73 68 69 83 fb 3f f3 33 33 33 33 33 33 fb 40 02 66 66 66 66 "
-                                    "66 66 fb 40 0b 33 33 33 33 33 33 ");
+                                  "66 66 fb 40 0b 33 33 33 33 33 33 ");
     }
 
     PREPARE_TEST
@@ -887,6 +887,6 @@ int main(int, char **)
 {
     jsonp_test();
     cborp_test();
-    //combo_test();
+    combo_test();
     codec_test();
 }
