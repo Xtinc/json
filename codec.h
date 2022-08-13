@@ -3,7 +3,7 @@
 
 #include "templates.h"
 #include "json.h"
-#include <ctime>
+#include <limits>
 #include <cstring>
 #include <sstream>
 
@@ -205,11 +205,11 @@ namespace serialization
             {
                 return 0;
             }
-            else if (val <= UCHAR_MAX)
+            else if (val <= std::numeric_limits<unsigned char>::max())
             {
                 return 1;
             }
-            else if (val <= USHRT_MAX)
+            else if (val <= std::numeric_limits<unsigned short>::max())
             {
                 return 2;
             }

@@ -223,9 +223,9 @@ namespace serialization
                 typename A::const_iterator *pci = nullptr,
                 typename A::value_type *pv = nullptr)
             {
-                using iterator = A::iterator;
-                using const_iterator = A::const_iterator;
-                using value_type = A::value_type;
+                using iterator = typename A::iterator;
+                using const_iterator = typename A::const_iterator;
+                using value_type = typename A::value_type;
                 return std::is_same<decltype(pt->begin()), iterator>::value &&
                        std::is_same<decltype(pt->end()), iterator>::value &&
                        std::is_same<decltype(cpt->begin()), const_iterator>::value &&
@@ -263,12 +263,12 @@ namespace serialization
                 typename A::mapped_type *pm = nullptr,
                 typename A::value_type *pv = nullptr)
             {
-                using iterator = A::iterator;
-                using const_iterator = A::const_iterator;
-                using key_type = A::key_type;
-                using value_type = A::value_type;
-                using key_type = A::key_type;
-                using mapped_type = A::mapped_type;
+                using iterator = typename A::iterator;
+                using const_iterator = typename A::const_iterator;
+                using key_type = typename A::key_type;
+                using value_type = typename A::value_type;
+                using key_type = typename A::key_type;
+                using mapped_type = typename A::mapped_type;
                 return std::is_same<decltype(pt->begin()), iterator>::value &&
                        std::is_same<decltype(pt->end()), iterator>::value &&
                        std::is_same<decltype(cpt->begin()), const_iterator>::value &&
@@ -359,7 +359,7 @@ namespace serialization
         return details::to_array_impl<remove_cv_t<T>, T, N>(std::move(a), make_index_sequence<N>{});
     }
 #endif
- 
+
     template <typename KeyType, typename ValueType, typename Comp = std::equal_to<KeyType>>
     typename std::enable_if<!std::is_function<ValueType>::value, ValueType>::type GenericSwitch(const KeyType &key,
                                                                                                 const std::initializer_list<std::pair<KeyType, ValueType>> &sws, Comp default_cmp = Comp())
@@ -396,14 +396,14 @@ namespace serialization
     {
         static constexpr bool const value = details::is_stl_array_like_impl<T>::value && (!details::is_stl_map_like_impl<T>::value);
     };
-    
+
     // STL map
     template <typename T>
     struct is_stl_map_like
     {
         static constexpr bool const value = details::is_stl_map_like_impl<T>::value;
     };
-    
+
     // containers have char
     template <typename T>
     struct is_signed_container

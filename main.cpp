@@ -151,14 +151,16 @@ CHECK_TRAIT(std::is_copy_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_move_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_destructible<Json>);
 
-static_assert(serialization::is_stl_array_like<std::array<Json, 5>>::value, "serialization::is_stl_array_like<std::array<Json,5>>");
+
+static_assert(serialization::is_stl_array_like<std::array<Json,5>>::value,"serialization::is_stl_array_like<std::array<Json,5>>");
 CHECK_TRAIT(!serialization::is_stl_array_like<Json[]>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::vector<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::list<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::deque<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::forward_list<Json>>);
 CHECK_TRAIT(!serialization::is_stl_array_like<std::stack<Json>>);
-static_assert(serialization::is_stl_map_like<std::map<Json, Json>>::value, "serialization::is_stl_map_like<std::map<Json,Json>>");
+static_assert(serialization::is_stl_map_like<std::map<Json,Json>>::value,"serialization::is_stl_map_like<std::map<Json,Json>>");
+
 
 inline string HexString(const string &str)
 {
