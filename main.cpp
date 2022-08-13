@@ -151,16 +151,14 @@ CHECK_TRAIT(std::is_copy_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_move_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_destructible<Json>);
 
-
-static_assert(serialization::is_stl_array_like<std::array<Json,5>>::value,"serialization::is_stl_array_like<std::array<Json,5>>");
+static_assert(serialization::is_stl_array_like<std::array<Json, 5>>::value, "serialization::is_stl_array_like<std::array<Json,5>>");
 CHECK_TRAIT(!serialization::is_stl_array_like<Json[]>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::vector<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::list<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::deque<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::forward_list<Json>>);
 CHECK_TRAIT(!serialization::is_stl_array_like<std::stack<Json>>);
-static_assert(serialization::is_stl_map_like<std::map<Json,Json>>::value,"serialization::is_stl_map_like<std::map<Json,Json>>");
-
+static_assert(serialization::is_stl_map_like<std::map<Json, Json>>::value, "serialization::is_stl_map_like<std::map<Json,Json>>");
 
 inline string HexString(const string &str)
 {
@@ -491,18 +489,19 @@ void cborp_test()
 
 void combo_test()
 {
-    std::ifstream ifs("../pass1.json");
+    std::ifstream ifs("../../pass1.json");
     string err;
     string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     auto j_string = Json::parse(str, err);
     TEST_ASSERT(err.empty());
     ifs.close();
-    ifs.open("../pass1.cbor", std::ios_base::binary);
+    ifs.open("../../pass1.cbor", std::ios_base::binary);
     string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     auto j_binary = Json::parse(str2, err, JsonFormat::BINARY_STANDARD);
     TEST_ASSERT(err.empty());
     TEST_ASSERT(j_string == j_binary);
     TEST_ASSERT(j_binary[8]["compact"][1].int_value() == 2);
+    std::cout << j_binary.stringify() << std::endl;
 }
 
 void codec_test()
@@ -657,7 +656,7 @@ void codec_test()
         cbs << "[1,[1,2]]"
             << "ceshi" << std::vector<double>{1.2, 2.3, 3.4};
         EXPECT_CBOREQ(cbs.GetData(), "69 5b 31 2c 5b 31 2c 32 5d 5d 65 63 65 73 68 69 83 fb 3f f3 33 33 33 33 33 33 fb 40 02 66 66 66 66 "
-                                  "66 66 fb 40 0b 33 33 33 33 33 33 ");
+                                     "66 66 fb 40 0b 33 33 33 33 33 33 ");
     }
 
     PREPARE_TEST
@@ -903,6 +902,6 @@ int main(int, char **)
 {
     jsonp_test();
     cborp_test();
-    //combo_test();
+    combo_test();
     codec_test();
 }
