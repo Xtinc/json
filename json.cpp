@@ -4,7 +4,7 @@
 
 namespace serialization
 {
-    constexpr int max_depth = 50;
+    constexpr int max_depth = 1000;
 
     using std::initializer_list;
     using std::map;

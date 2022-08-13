@@ -151,16 +151,14 @@ CHECK_TRAIT(std::is_copy_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_move_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_destructible<Json>);
 
-
-static_assert(serialization::is_stl_array_like<std::array<Json,5>>::value,"serialization::is_stl_array_like<std::array<Json,5>>");
+static_assert(serialization::is_stl_array_like<std::array<Json, 5>>::value, "serialization::is_stl_array_like<std::array<Json,5>>");
 CHECK_TRAIT(!serialization::is_stl_array_like<Json[]>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::vector<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::list<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::deque<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::forward_list<Json>>);
 CHECK_TRAIT(!serialization::is_stl_array_like<std::stack<Json>>);
-static_assert(serialization::is_stl_map_like<std::map<Json,Json>>::value,"serialization::is_stl_map_like<std::map<Json,Json>>");
-
+static_assert(serialization::is_stl_map_like<std::map<Json, Json>>::value, "serialization::is_stl_map_like<std::map<Json,Json>>");
 
 inline string HexString(const string &str)
 {
@@ -491,19 +489,21 @@ void cborp_test()
 
 void combo_test()
 {
-    std::ifstream ifs("../../pass1.json");
-    string err;
-    string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    auto j_string = Json::parse(str, err);
-    TEST_ASSERT(err.empty());
-    ifs.close();
-    ifs.open("../../pass1.cbor", std::ios_base::binary);
-    string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    auto j_binary = Json::parse(str2, err, JsonFormat::BINARY_STANDARD);
-    TEST_ASSERT(err.empty());
-    TEST_ASSERT(j_string == j_binary);
-    TEST_ASSERT(j_binary[8]["compact"][1].int_value() == 2);
-    std::cout << j_binary.stringify() << std::endl;
+    for (const std::string &filename : {"1.json", "2.json", "3.json", "4.json", "5.json", "6.json"})
+    {
+        std::ifstream ifs(std::string("../../json.org/") + filename);
+        string err;
+        string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        auto j_string = Json::parse(str, err);
+        TEST_ASSERT(err.empty());
+        ifs.close();
+        ifs.open(std::string("../../json.org/") + filename + ".cbor", std::ios_base::binary);
+        string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        auto j_binary = Json::parse(str2, err, JsonFormat::BINARY_STANDARD);
+        TEST_ASSERT(err.empty());
+        TEST_ASSERT(j_string == j_binary);
+        std::cout << j_binary.stringify() << std::endl;
+    }
 }
 
 void codec_test()
