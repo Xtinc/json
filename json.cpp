@@ -279,9 +279,13 @@ namespace serialization
         JsonNull() : Value({}) {}
     };
 
+    // two ways to deal with null reference.
+    // one is static null object below
+    // another is throw exception.
+
     struct Statics
     {
-        Json empty_json{};
+        const Json empty_json{};
         const string empty_string{};
         const vector<Json> empty_vector{};
         const map<string, Json> empty_map{};
@@ -387,17 +391,17 @@ namespace serialization
 
     const Json &JsonValue::operator[](size_t) const { return null_object.empty_json; }
 
-    Json &JsonValue::operator[](size_t) { return null_object.empty_json; }
+    Json &JsonValue::operator[](size_t) { throw std::out_of_range("non-const reference to null json object"); }
 
     const Json &JsonValue::at(size_t) const { return null_object.empty_json; }
 
-    Json &JsonValue::at(size_t) { return null_object.empty_json; }
+    Json &JsonValue::at(size_t) { throw std::out_of_range("non-const reference to null json object"); }
 
-    Json &JsonValue::operator[](const string &) { return null_object.empty_json; }
+    Json &JsonValue::operator[](const string &) { throw std::out_of_range("non-const reference to null json object"); }
 
     const Json &JsonValue::at(const string &) const { return null_object.empty_json; }
 
-    Json &JsonValue::at(const string &) { return null_object.empty_json; }
+    Json &JsonValue::at(const string &) { throw std::out_of_range("non-const reference to null json object"); }
 
     Json &JsonObject::operator[](const string &key)
     {
@@ -406,14 +410,18 @@ namespace serialization
 
     const Json &JsonObject::at(const string &key) const
     {
+        return m_value.at(key);
+        /*
         auto iter = m_value.find(key);
-        return (iter == m_value.end()) ? null_object.empty_json : iter->second;
+        return (iter == m_value.end()) ? null_object.empty_json : iter->second;*/
     }
 
     Json &JsonObject::at(const string &key)
     {
+        return m_value.at(key);
+        /*
         auto iter = m_value.find(key);
-        return (iter == m_value.end()) ? null_object.empty_json : iter->second;
+        return (iter == m_value.end()) ? null_object.empty_json : iter->second;*/
     }
 
     const Json &JsonArray::operator[](size_t i) const
@@ -428,12 +436,14 @@ namespace serialization
 
     const Json &JsonArray::at(size_t i) const
     {
-        return i >= m_value.size() ? null_object.empty_json : m_value.at(i);
+        return m_value.at(i);
+        // return i >= m_value.size() ? null_object.empty_json : m_value.at(i);
     }
 
     Json &JsonArray::at(size_t i)
     {
-        return i >= m_value.size() ? null_object.empty_json : m_value.at(i);
+        return m_value.at(i);
+        // return i >= m_value.size() ? null_object.empty_json : m_value.at(i);
     }
 
     Json &Json::operator=(const Json &json)
