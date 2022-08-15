@@ -126,19 +126,19 @@ namespace TestReflect
 
 ENUM_STRINGS(TestReflect::box_type, "ms", "mr", "co", "none")
 
-REFLECT(TestReflect::ReflectA, FIELD(TestReflect::ReflectA, a), FIELD(TestReflect::ReflectA, enn))
+REFLECT(TestReflect::ReflectA, FIELD(a), FIELD(enn))
 
-REFLECT(TestReflect::ReflectB, FIELD(TestReflect::ReflectB, b))
+REFLECT(TestReflect::ReflectB, FIELD(b))
 
-REFLECT(TestReflect::ReflectC, FIELD(TestReflect::ReflectC, c))
+REFLECT(TestReflect::ReflectC, FIELD(c))
 
-REFLECT(TestReflect::Point, FIELD(TestReflect::Point, x), FIELD(TestReflect::Point, y), FIELD(TestReflect::Point, dd),
-        FIELD(TestReflect::Point, str))
+REFLECT(TestReflect::Point, FIELD(x), FIELD(y), FIELD(dd),
+        FIELD(str))
 
-REFLECT(TestReflect::Rect, FIELD(TestReflect::Rect, specialPoint), FIELD(TestReflect::Rect, plist),
-        FIELD(TestReflect::Rect, color))
+REFLECT(TestReflect::Rect, FIELD(specialPoint), FIELD(plist),
+        FIELD(color))
 
-REFLECT(TestReflect::Box, FIELD(TestReflect::Box, faces), FIELD(TestReflect::Box, Boxtype))
+REFLECT(TestReflect::Box, FIELD(faces), FIELD(Boxtype))
 
 ENUM_STRINGS(TestEnum::Foo::NestedEnum, "fa", "fb")
 
@@ -922,14 +922,11 @@ void codec_test()
         box.faces.emplace("left face", rect1);
         box.faces.emplace("right face", rect2);
         box.Boxtype = TestReflect::box_type::none;
-        CborStream cbs;
-        cbs << box;
         string err;
-        auto j = Json::parse(cbs.GetData(), err, JsonFormat::BINARY_STANDARD);
-        EXPECT_STRING_EQUAL(j["Boxtype"].string_value().c_str(), "none");
-        EXPECT_EQ(j["faces"]["left face"]["plist"][1]["x"], 3);
         auto j2 = json_from_object(box, err);
         std::cout << j2.stringify() << std::endl;
+        EXPECT_STRING_EQUAL(j2["Boxtype"].string_value().c_str(), "none");
+        EXPECT_EQ(j2["faces"]["left face"]["plist"][1]["x"], 3);
     }
 }
 

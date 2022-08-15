@@ -483,6 +483,7 @@ namespace serialization
     template <>                                              \
     struct StructMetaInfo<Struct>                            \
     {                                                        \
+        using T = Struct;                                    \
         static decltype(std::make_tuple(__VA_ARGS__)) Info() \
         {                                                    \
             return std::make_tuple(__VA_ARGS__);             \
@@ -513,6 +514,6 @@ namespace serialization
         return is;                                                                   \
     }
 
-#define FIELD(classname, field) std::make_tuple(#field, &classname::field)
+#define FIELD(field) std::make_tuple(#field, &T::field)
 
 #endif

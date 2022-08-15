@@ -773,6 +773,6 @@ namespace serialization
         cbs << t;
         return Json::parse(cbs.GetData(), err, JsonFormat::BINARY_STANDARD);
     }
-} // namespace reclog
+} // namespace
 
 #endif
