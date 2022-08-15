@@ -114,6 +114,7 @@ namespace TestReflect
     {
     public:
         Box() = default;
+
         virtual ~Box() = default;
 
     public:
@@ -126,16 +127,23 @@ namespace TestReflect
 ENUM_STRINGS(TestReflect::box_type, "ms", "mr", "co", "none")
 
 REFLECT(TestReflect::ReflectA, FIELD(TestReflect::ReflectA, a), FIELD(TestReflect::ReflectA, enn))
+
 REFLECT(TestReflect::ReflectB, FIELD(TestReflect::ReflectB, b))
+
 REFLECT(TestReflect::ReflectC, FIELD(TestReflect::ReflectC, c))
 
 REFLECT(TestReflect::Point, FIELD(TestReflect::Point, x), FIELD(TestReflect::Point, y), FIELD(TestReflect::Point, dd),
         FIELD(TestReflect::Point, str))
+
 REFLECT(TestReflect::Rect, FIELD(TestReflect::Rect, specialPoint), FIELD(TestReflect::Rect, plist),
         FIELD(TestReflect::Rect, color))
+
 REFLECT(TestReflect::Box, FIELD(TestReflect::Box, faces), FIELD(TestReflect::Box, Boxtype))
+
 ENUM_STRINGS(TestEnum::Foo::NestedEnum, "fa", "fb")
+
 ENUM_STRINGS(TestEnum::StrongEnum, "sa", "sb")
+
 ENUM_STRINGS(TestEnum::WeakEnum, "wa", "wb")
 
 using namespace serialization;
@@ -151,14 +159,16 @@ CHECK_TRAIT(std::is_copy_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_move_assignable<Json>);
 CHECK_TRAIT(std::is_nothrow_destructible<Json>);
 
-static_assert(serialization::is_stl_array_like<std::array<Json, 5>>::value, "serialization::is_stl_array_like<std::array<Json,5>>");
+static_assert(serialization::is_stl_array_like<std::array<Json, 5>>::value,
+              "serialization::is_stl_array_like<std::array<Json,5>>");
 CHECK_TRAIT(!serialization::is_stl_array_like<Json[]>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::vector<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::list<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::deque<Json>>);
 CHECK_TRAIT(serialization::is_stl_array_like<std::forward_list<Json>>);
 CHECK_TRAIT(!serialization::is_stl_array_like<std::stack<Json>>);
-static_assert(serialization::is_stl_map_like<std::map<Json, Json>>::value, "serialization::is_stl_map_like<std::map<Json,Json>>");
+static_assert(serialization::is_stl_map_like<std::map<Json, Json>>::value,
+              "serialization::is_stl_map_like<std::map<Json,Json>>");
 
 inline string HexString(const string &str)
 {
@@ -269,8 +279,10 @@ void jsonp_test()
     TEST_ASSERT(Json(l1) == Json(l2));
     TEST_ASSERT(Json(l2) == Json(l3));
 
-    std::map<string, string> m1{{"k1", "v1"}, {"k2", "v2"}};
-    std::unordered_map<string, string> m2{{"k1", "v1"}, {"k2", "v2"}};
+    std::map<string, string> m1{{"k1", "v1"},
+                                {"k2", "v2"}};
+    std::unordered_map<string, string> m2{{"k1", "v1"},
+                                          {"k2", "v2"}};
     TEST_ASSERT(Json(m1) == Json(m2));
 
     // Json literals
@@ -335,7 +347,8 @@ void jsonp_test()
             TEST_ASSERT(
                 (size_t)std::count_if(res.begin(), res.end(),
                                       [](const Json &j)
-                                      { return !j.is_null(); }) == tst.expect_not_empty_elms_count);
+                                      { return !j.is_null(); }) ==
+                tst.expect_not_empty_elms_count);
             if (!res.empty())
             {
                 TEST_ASSERT(tst.expect_parse_res == res[0]);
@@ -357,11 +370,15 @@ void jsonp_test()
     public:
         int x;
         int y;
+
         Point(int x, int y) : x(x), y(y) {}
+
         Json to_json() const { return Json::array{x, y}; }
     };
 
-    std::vector<Point> points = {{1, 2}, {10, 20}, {100, 200}};
+    std::vector<Point> points = {{1, 2},
+                                 {10, 20},
+                                 {100, 200}};
     std::string points_json = Json(points).stringify();
     std::cout << "points_json: " << points_json << "\n";
     TEST_ASSERT(points_json == "[[1, 2], [10, 20], [100, 200]]");
@@ -448,13 +465,16 @@ void cborp_test()
     TEST_ASSERT(j.type() == Json::ARRAY);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), "[[[[]]]]");
 
-    array_string = bytes2string({0x82, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x41, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x42});
+    array_string = bytes2string(
+        {0x82, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x41, 0x67, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x42});
     j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     TEST_ASSERT(err.empty());
     TEST_ASSERT(j.type() == Json::ARRAY);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), R"(["stringA", "stringB"])");
 
-    array_string = bytes2string({0x83, 0xFB, 0x40, 0x11, 0xD7, 0x0A, 0x3D, 0x70, 0xA3, 0xD7, 0xFB, 0xC1, 0x2E, 0x84, 0x7F, 0xCC, 0xCC, 0xCC, 0xCD, 0xFB, 0x3E, 0xB4, 0xB3, 0xFD, 0x59, 0x42, 0xCD, 0x96});
+    array_string = bytes2string(
+        {0x83, 0xFB, 0x40, 0x11, 0xD7, 0x0A, 0x3D, 0x70, 0xA3, 0xD7, 0xFB, 0xC1, 0x2E, 0x84, 0x7F, 0xCC, 0xCC, 0xCC,
+         0xCD, 0xFB, 0x3E, 0xB4, 0xB3, 0xFD, 0x59, 0x42, 0xCD, 0x96});
     j = Json::parse(array_string, err, JsonFormat::BINARY_STANDARD);
     TEST_ASSERT(err.empty());
     TEST_ASSERT(j.type() == Json::ARRAY);
@@ -480,24 +500,27 @@ void cborp_test()
     TEST_ASSERT(j.type() == Json::OBJECT);
     EXPECT_STRING_EQUAL(j.stringify().c_str(), "{\"a\": 1, \"b\": [2, 3]}");
 
-    object_string = bytes2string({0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61, 0x65, 0x61, 0x45});
+    object_string = bytes2string(
+        {0xa5, 0x61, 0x61, 0x61, 0x41, 0x61, 0x62, 0x61, 0x42, 0x61, 0x63, 0x61, 0x43, 0x61, 0x64, 0x61, 0x44, 0x61,
+         0x65, 0x61, 0x45});
     j = Json::parse(object_string, err, JsonFormat::BINARY_STANDARD);
     TEST_ASSERT(err.empty());
     TEST_ASSERT(j.type() == Json::OBJECT);
-    EXPECT_STRING_EQUAL(j.stringify().c_str(), "{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}");
+    EXPECT_STRING_EQUAL(j.stringify().c_str(),
+                        "{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}");
 }
 
 void combo_test()
 {
     for (const std::string &filename : {"1.json", "2.json", "3.json", "4.json", "5.json", "6.json"})
     {
-        std::ifstream ifs(std::string("../../json.org/") + filename);
+        std::ifstream ifs(std::string("../json.org/") + filename);
         string err;
         string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         auto j_string = Json::parse(str, err);
         TEST_ASSERT(err.empty());
         ifs.close();
-        ifs.open(std::string("../../json.org/") + filename + ".cbor", std::ios_base::binary);
+        ifs.open(std::string("../json.org/") + filename + ".cbor", std::ios_base::binary);
         string str2((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
         auto j_binary = Json::parse(str2, err, JsonFormat::BINARY_STANDARD);
         TEST_ASSERT(err.empty());
@@ -634,9 +657,13 @@ void codec_test()
 
     PREPARE_TEST
     {
-        std::map<int, int> mp1 = {{1, 2}, {2, 2}, {3, 56}};
+        std::map<int, int> mp1 = {{1, 2},
+                                  {2, 2},
+                                  {3, 56}};
         // 0xA301020202031838
-        std::unordered_map<std::string, std::string> mp2 = {{"key", "value"}, {"jkfdh", "vfd"}, {"c876rw%^", ""}};
+        std::unordered_map<std::string, std::string> mp2 = {{"key", "value"},
+                                                            {"jkfdh", "vfd"},
+                                                            {"c876rw%^", ""}};
         const std::unordered_map<std::string, std::string> &pp = mp2;
         // rd order ,need https://cbor.me/
         std::vector<int> a1 = {782736, 123, -343242};
@@ -657,8 +684,9 @@ void codec_test()
     {
         cbs << "[1,[1,2]]"
             << "ceshi" << std::vector<double>{1.2, 2.3, 3.4};
-        EXPECT_CBOREQ(cbs.GetData(), "69 5b 31 2c 5b 31 2c 32 5d 5d 65 63 65 73 68 69 83 fb 3f f3 33 33 33 33 33 33 fb 40 02 66 66 66 66 "
-                                     "66 66 fb 40 0b 33 33 33 33 33 33 ");
+        EXPECT_CBOREQ(cbs.GetData(),
+                      "69 5b 31 2c 5b 31 2c 32 5d 5d 65 63 65 73 68 69 83 fb 3f f3 33 33 33 33 33 33 fb 40 02 66 66 66 66 "
+                      "66 66 fb 40 0b 33 33 33 33 33 33 ");
     }
 
     PREPARE_TEST
@@ -785,8 +813,12 @@ void codec_test()
 
     PREPARE_TEST
     {
-        std::map<int, int> mp1 = {{1, 2}, {2, 2}, {3, 56}};
-        std::unordered_map<std::string, std::string> mp2 = {{"key", "value"}, {"jkfdh", "vfd"}, {"c876rw%^", ""}};
+        std::map<int, int> mp1 = {{1, 2},
+                                  {2, 2},
+                                  {3, 56}};
+        std::unordered_map<std::string, std::string> mp2 = {{"key", "value"},
+                                                            {"jkfdh", "vfd"},
+                                                            {"c876rw%^", ""}};
         // const std::unordered_map<std::string, std::string> &pp = mp2;
         std::vector<int> a1 = {782736, 123, -343242};
         std::vector<int> a2 = {97969, -23424, -12361};
@@ -896,7 +928,8 @@ void codec_test()
         auto j = Json::parse(cbs.GetData(), err, JsonFormat::BINARY_STANDARD);
         EXPECT_STRING_EQUAL(j["Boxtype"].string_value().c_str(), "none");
         EXPECT_EQ(j["faces"]["left face"]["plist"][1]["x"], 3);
-        std::cout << j.stringify() << std::endl;
+        auto j2 = json_from_object(box, err);
+        std::cout << j2.stringify() << std::endl;
     }
 }
 

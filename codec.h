@@ -1,7 +1,6 @@
 #ifndef CODEC_H
 #define CODEC_H
 
-#include "templates.h"
 #include "json.h"
 #include <limits>
 #include <cstring>
@@ -258,7 +257,7 @@ namespace serialization
 
             switch (len)
             {
-                // no break here , I need different entry point for different type.
+            // no break here , I need different entry point for different type.
             case 8:
                 m_vBuf.push_back(((uint64_t)t >> 56) & 0xffU);
                 m_vBuf.push_back(((uint64_t)t >> 48) & 0xffU);
@@ -271,6 +270,8 @@ namespace serialization
                 m_vBuf.push_back((t >> 8) & 0xffU);
             case 1:
                 m_vBuf.push_back(t & 0xffU);
+            default:
+                break;
             }
 
             return 1 + len;
@@ -347,6 +348,8 @@ namespace serialization
                 t |= static_cast<Type>(reinterpret_cast<const unsigned char &>(*(m_pIter++)));
                 len++;
                 return len;
+            default:
+                break;
             }
             err = 1; // bad additional value.
             return 0;
@@ -542,6 +545,7 @@ namespace serialization
         {
             return EncodeTagAndValue(details::ucPInt, t);
         }
+
         // check const?
         template <typename Type>
         enable_if_t<std::is_unsigned<Type>::value, std::size_t> DecodeData(Type &t, int &err)
@@ -649,7 +653,9 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_array_like<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value &&
+                        is_stl_array_like<Type>::value,
+                    std::size_t>
         EncodeData(const Type &t)
         {
             auto len = EncodeTagAndValue(details::ucArray, t.size());
@@ -661,7 +667,9 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_array_like<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value &&
+                        is_stl_array_like<Type>::value,
+                    std::size_t>
         DecodeData(Type &t, int &err)
         {
             err = 0;
@@ -683,7 +691,9 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_map_like<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value &&
+                        is_stl_map_like<Type>::value,
+                    std::size_t>
         EncodeData(const Type &t)
         {
             auto len = EncodeTagAndValue(details::ucMap, t.size());
@@ -695,7 +705,9 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value && is_stl_map_like<Type>::value, std::size_t>
+        enable_if_t<!is_signed_container<Type>::value && !is_unsigned_container<Type>::value &&
+                        is_stl_map_like<Type>::value,
+                    std::size_t>
         DecodeData(Type &t, int &err)
         {
             err = 0;
@@ -719,7 +731,8 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!std::is_fundamental<Type>::value && !is_signed_container<Type>::value && !is_unsigned_container<Type>::value &&
+        enable_if_t<!std::is_fundamental<Type>::value && !is_signed_container<Type>::value &&
+                        !is_unsigned_container<Type>::value &&
                         is_relected_object<Type>::value,
                     std::size_t>
         EncodeData(const Type &t)
@@ -730,9 +743,11 @@ namespace serialization
         }
 
         template <typename Type>
-        enable_if_t<!std::is_fundamental<Type>::value && !std::is_enum<Type>::value && !is_signed_container<Type>::value &&
-                        !is_unsigned_container<Type>::value &&!is_relected_object<Type>::value&& is_overloaded_operator<Type>::value,
-                    std::size_t>
+        enable_if_t<
+            !std::is_fundamental<Type>::value && !std::is_enum<Type>::value && !is_signed_container<Type>::value &&
+                !is_unsigned_container<Type>::value && !is_relected_object<Type>::value &&
+                is_overloaded_operator<Type>::value,
+            std::size_t>
         EncodeData(const Type &t)
         {
             std::stringstream ss;
@@ -741,6 +756,23 @@ namespace serialization
         }
     };
 
+    inline Json json_from_string(const std::string &in, std::string &err)
+    {
+        return Json::parse(in, err, JsonFormat::STRING_COMMENTS);
+    }
+
+    inline Json json_from_binary(const std::string &in, std::string &err)
+    {
+        return Json::parse(in, err, JsonFormat::BINARY_EXTENTED);
+    }
+
+    template <typename T, enable_if_t<is_relected_object<T>::value, int> = 0>
+    Json json_from_object(const T &t, std::string &err)
+    {
+        CborStream cbs;
+        cbs << t;
+        return Json::parse(cbs.GetData(), err, JsonFormat::BINARY_STANDARD);
+    }
 } // namespace reclog
 
 #endif
