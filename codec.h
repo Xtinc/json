@@ -76,7 +76,7 @@ namespace serialization
         };
 
         template <typename T>
-        struct encode_each_in_reflected_helper<T, enable_if_t<is_relected_object<decay_t<T>>::value>>
+        struct encode_each_in_reflected_helper<T, enable_if_t<is_reflected_object<decay_t<T>>::value>>
         {
             static void apply(T &&obj, CborStream &cbs, size_t &len, const char *fieldName = "")
             {
@@ -732,8 +732,8 @@ namespace serialization
 
         template <typename Type>
         enable_if_t<!std::is_fundamental<Type>::value && !is_signed_container<Type>::value &&
-                        !is_unsigned_container<Type>::value &&
-                        is_relected_object<Type>::value,
+                    !is_unsigned_container<Type>::value &&
+                    is_reflected_object<Type>::value,
                     std::size_t>
         EncodeData(const Type &t)
         {
@@ -744,8 +744,8 @@ namespace serialization
 
         template <typename Type>
         enable_if_t<
-            !std::is_fundamental<Type>::value && !std::is_enum<Type>::value && !is_signed_container<Type>::value &&
-                !is_unsigned_container<Type>::value && !is_relected_object<Type>::value &&
+                !std::is_fundamental<Type>::value && !std::is_enum<Type>::value && !is_signed_container<Type>::value &&
+                !is_unsigned_container<Type>::value && !is_reflected_object<Type>::value &&
                 is_overloaded_operator<Type>::value,
             std::size_t>
         EncodeData(const Type &t)
@@ -766,7 +766,7 @@ namespace serialization
         return Json::parse(in, err, JsonFormat::BINARY_EXTENTED);
     }
 
-    template <typename T, enable_if_t<is_relected_object<T>::value, int> = 0>
+    template <typename T, enable_if_t<is_reflected_object<T>::value, int> = 0>
     Json json_from_object(const T &t, std::string &err)
     {
         CborStream cbs;

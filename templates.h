@@ -442,7 +442,7 @@ namespace serialization
     }
 
     template <typename T>
-    struct is_relected_object
+    struct is_reflected_object
     {
         static constexpr bool const value = std::tuple_size<decltype(StructMetaInfo<T>::Info())>::value != 0;
     };
