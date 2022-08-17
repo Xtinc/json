@@ -184,21 +184,21 @@ namespace serialization
     using std::make_unique;
 #else
     template <class T, class... Args>
-    typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+    enable_if_t<!std::is_array<T>::value, std::unique_ptr<T>>
     make_unique(Args &&...args)
     {
         return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
     }
 
     template <class T, class... Args>
-    typename std::enable_if<details::is_unbounded_array<T>::value, std::unique_ptr<T>>::type
+    enable_if_t<details::is_unbounded_array<T>::value, std::unique_ptr<T>>
     make_unique(std::size_t n)
     {
         return std::unique_ptr<T>(new typename std::remove_extent<T>::type[n]());
     }
 
     template <class T, class... Args>
-    typename std::enable_if<details::is_bounded_array<T>::value>::type make_unique(Args &&...) = delete;
+    enable_if_t<details::is_bounded_array<T>::value> make_unique(Args &&...) = delete;
 
 #endif
     // second part is an implement for classify containers and which depends on above.
@@ -293,7 +293,7 @@ namespace serialization
         };
 
         template <typename T>
-        struct is_signed_char_container<T, typename std::enable_if<std::is_same<typename T::value_type, char>::value>::type>
+        struct is_signed_char_container<T, enable_if_t<std::is_same<typename T::value_type, char>::value>>
             : std::true_type
         {
         };
@@ -305,7 +305,7 @@ namespace serialization
 
         template <typename T>
         struct is_unsigned_char_container<T,
-                                          typename std::enable_if<std::is_same<typename T::value_type, unsigned char>::value>::type> : std::true_type
+                                          enable_if_t<std::is_same<typename T::value_type, unsigned char>::value>> : std::true_type
         {
         };
 
@@ -313,8 +313,9 @@ namespace serialization
         struct is_overloaded_operator : public std::false_type
         {
         };
+
         template <typename T>
-        struct is_overloaded_operator<T, void_t<decltype(*(std::ostream *)nullptr << std::declval<T>())>>
+        struct is_overloaded_operator<T, void_t<decltype(std::declval<std::ostream>() << std::declval<T>())>>
             : public std::true_type
         {
         };
@@ -361,8 +362,8 @@ namespace serialization
 #endif
 
     template <typename KeyType, typename ValueType, typename Comp = std::equal_to<KeyType>>
-    typename std::enable_if<!std::is_function<ValueType>::value, ValueType>::type GenericSwitch(const KeyType &key,
-                                                                                                const std::initializer_list<std::pair<KeyType, ValueType>> &sws, Comp default_cmp = Comp())
+    enable_if_t<!std::is_function<ValueType>::value, ValueType> GenericSwitch(const KeyType &key,
+                                                                              const std::initializer_list<std::pair<KeyType, ValueType>> &sws, Comp default_cmp = Comp())
     {
         for (const auto &pair : sws)
         {
@@ -375,8 +376,8 @@ namespace serialization
     }
 
     template <typename KeyType, typename Signature, typename Comp = std::less<KeyType>>
-    typename std::enable_if<std::is_function<Signature>::value,
-                            typename details::SwitchFuncType<std::is_function<Signature>::value, Signature>::RetType>::type
+    enable_if_t<std::is_function<Signature>::value,
+                typename details::SwitchFuncType<std::is_function<Signature>::value, Signature>::RetType>
     GenericSwitch(const KeyType &key, const std::initializer_list<std::pair<KeyType, std::function<Signature>>> &sws,
                   Comp default_cmp = Comp())
     {
