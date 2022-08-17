@@ -7,6 +7,8 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <cinttypes>
+#include <ctime>
 #include "templates.h"
 
 namespace serialization
@@ -14,6 +16,7 @@ namespace serialization
     namespace details
     {
         class JsonValue;
+        class JsonNull;
 
         constexpr int NESTED_DEPTH = 1000;
 
@@ -75,6 +78,33 @@ namespace serialization
         }
     }
 
+    struct EpochTimeUs
+    {
+        uint64_t m_ullEpochTimeUs;
+
+        void SetTime(const std::string &t)
+        {
+            std::tm time = {};
+            sscanf(t.c_str(), "%04d-%02d-%02dT%02d:%02d:%02d", &time.tm_year, &time.tm_mon, &time.tm_mday, &time.tm_hour,
+                   &time.tm_min, &time.tm_sec);
+            time.tm_year -= 1900;
+            time.tm_mon -= 1;
+            m_ullEpochTimeUs = std::mktime(&time) * 1000000;
+        }
+
+        std::string PrintEpochTime() const
+        {
+            char buff[30] = {0};
+            auto sec_since_epoch = time_t(m_ullEpochTimeUs / 1000000);
+            tm time_info{};
+            localtime_r(&sec_since_epoch, &time_info);
+            snprintf(buff, 30, "%04d-%02d-%02dT%02d:%02d:%02d.%06" PRId64 "Z", (1900 + time_info.tm_year) % 10000u,
+                     (1 + time_info.tm_mon) % 100u, time_info.tm_mday, time_info.tm_hour, time_info.tm_min, time_info.tm_sec,
+                     m_ullEpochTimeUs % 1000000);
+            return buff;
+        }
+    };
+
     class Json
     {
     public:
@@ -100,7 +130,7 @@ namespace serialization
         using array = std::vector<Json>;
         using object = std::map<std::string, Json>;
 
-        Json() noexcept;
+        Json() noexcept : m_ptr(make_unique<details::JsonNull>()) {}
 
         Json(const Json &json);
 
@@ -1074,6 +1104,9 @@ namespace serialization
                 case DecodeStatus::TYPE:
                     parser_type();
                     break;
+                case DecodeStatus::TAG:
+                    parser_tag();
+                    break;
                 case DecodeStatus::STRING_SIZE:
                     parser_string_size(DecodeStatus::STRING_DATA);
                     break;
@@ -1334,6 +1367,39 @@ namespace serialization
                 default:
                     fail("unknow major_type", "");
                     break;
+                }
+            }
+
+            void parser_tag()
+            {
+                if (!has_bytes(curlen))
+                {
+                    fail("not enough length!", "");
+                    return;
+                }
+                switch (curlen)
+                {
+                case 0:
+                    curlen = instant_num;
+                    break;
+                case 1:
+                    curlen = get_byte();
+                    break;
+                case 2:
+                case 4:
+                    curlen = get_uint16();
+                    break;
+                case 8:
+                    fail("extra long bytes");
+                    break;
+                }
+                if (instant_num == 0)
+                {
+                    status = DecodeStatus::TYPE;
+                }
+                else
+                {
+                    status = DecodeStatus::ERROR;
                 }
             }
 
@@ -2041,6 +2107,29 @@ namespace serialization
             return len + sizeof(double);
         }
 
+        size_t EncodeData(const EpochTimeUs &t)
+        {
+            auto len = EncodeDirectly(details::ucSemantic, details::ucDataTime);
+            return len + EncodeData(t.PrintEpochTime());
+        }
+
+        size_t DecodeData(EpochTimeUs &t, int &err)
+        {
+            err = 0;
+            auto tag = details::ucUndefined;
+            auto value = details::ucUndefined;
+            auto len = DecodeTagAndValue(tag, value, err);
+            if (tag != details::ucSemantic || value != details::ucDataTime)
+            {
+                err = 1; // type error!
+                return 0;
+            }
+            std::string time;
+            len += DecodeData(time, err);
+            t.SetTime(time);
+            return len;
+        }
+
         size_t EncodeData(const Json &t)
         {
             size_t len = 0;
@@ -2386,7 +2475,6 @@ namespace serialization
         return json_vec;
     }
 
-    Json::Json() noexcept : m_ptr(make_unique<details::JsonNull>()) {}
 
     Json::Json(const Json &json)
     {
