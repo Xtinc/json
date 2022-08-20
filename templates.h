@@ -391,6 +391,14 @@ namespace serialization
         return {};
     }
 
+    template <typename T>
+    struct is_arithmetic_integer_number
+    {
+        using N = decay_t<T>;
+        static constexpr bool const value =
+            (std::is_integral<N>::value && !std::is_same<N, bool>::value && !std::is_same<N, char>::value);
+    };
+
     // STL list
     template <typename T>
     struct is_stl_array_like
