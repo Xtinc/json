@@ -343,6 +343,49 @@ namespace serialization
         {
             using RetType = typename std::function<T>::result_type;
         };
+
+        class ScopeGuardBase
+        {
+        public:
+            ScopeGuardBase() : _commit(false) {}
+            void commit() const noexcept
+            {
+                _commit = true;
+            }
+
+        protected:
+            ScopeGuardBase(ScopeGuardBase &&other) : _commit(other._commit)
+            {
+                other.commit();
+            }
+            ~ScopeGuardBase()
+            {
+            }
+            mutable bool _commit;
+
+        private:
+            ScopeGuardBase &operator=(const ScopeGuardBase &) = delete;
+        };
+
+        template <typename Func>
+        class ScopeGuard : public ScopeGuardBase
+        {
+        public:
+            ScopeGuard(Func &&func) : _func(func) {}
+            ScopeGuard(const Func &func) : _func(func) {}
+            ~ScopeGuard()
+            {
+                if (!_commit)
+                {
+                    _func();
+                }
+            }
+            ScopeGuard(ScopeGuard &&other) : ScopeGuardBase(std::move(other)), _func(other._func) {}
+
+        private:
+            Func _func;
+        };
+
     } // namespace details
 
 #ifdef __cpp_lib_to_array
@@ -373,6 +416,12 @@ namespace serialization
             }
         }
         return {};
+    }
+
+    template <typename Func>
+    details::ScopeGuard<Func> make_guard(Func &&func)
+    {
+        return details::ScopeGuard<Func>(std::forward<Func>(func));
     }
 
     template <typename KeyType, typename Signature, typename Comp = std::less<KeyType>>
@@ -487,6 +536,11 @@ namespace serialization
     }
 
 } // namespace reclog
+
+#define __CONCATENATE(s1, s2) s1##s2
+
+#define MAKEGUARD(Para) \
+    auto __CONCATENATE(Exit_Block_Guard, __LINE__) = serialization::make_guard(Para);
 
 #define REFLECT(Struct, ...)                                 \
     template <>                                              \

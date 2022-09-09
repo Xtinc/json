@@ -24,7 +24,8 @@
 
 #include "codec.h"
 
-struct test_encoder_stream_io {
+struct test_encoder_stream_io
+{
   int a;
   int b;
   double c;
@@ -34,63 +35,93 @@ struct test_encoder_stream_io {
       : a(_a), b(_b), c(_c), d(_d) {}
 
   friend std::ostream &operator<<(std::ostream &os,
-                                  const test_encoder_stream_io &ss) {
+                                  const test_encoder_stream_io &ss)
+  {
     os << ss.a << ss.b << ss.c << ss.d;
     return os;
   };
 };
 
-namespace TestEnum {
-enum WeakEnum { A, B, END };
+namespace TestEnum
+{
+  enum WeakEnum
+  {
+    A,
+    B,
+    END
+  };
 
-enum class StrongEnum : int16_t { A, B };
+  enum class StrongEnum : int16_t
+  {
+    A,
+    B
+  };
 
-struct Foo {
-  enum class NestedEnum { A, B, END };
-};
+  struct Foo
+  {
+    enum class NestedEnum
+    {
+      A,
+      B,
+      END
+    };
+  };
 } // namespace TestEnum
 
-namespace TestReflect {
-enum class box_type { ms, mr, co, none };
+namespace TestReflect
+{
+  enum class box_type
+  {
+    ms,
+    mr,
+    co,
+    none
+  };
 
-class ReflectA {
-public:
-  int a;
-  box_type enn;
-};
+  class ReflectA
+  {
+  public:
+    int a;
+    box_type enn;
+  };
 
-class ReflectB {
-public:
-  ReflectA b;
-};
+  class ReflectB
+  {
+  public:
+    ReflectA b;
+  };
 
-class ReflectC {
-public:
-  ReflectB c;
-};
+  class ReflectC
+  {
+  public:
+    ReflectB c;
+  };
 
-struct Point {
-  int x, y;
-  std::array<double, 5> dd;
-  std::string str;
-};
+  struct Point
+  {
+    int x, y;
+    std::array<double, 5> dd;
+    std::string str;
+  };
 
-struct Rect {
-  Point specialPoint;
-  std::vector<Point> plist;
-  uint32_t color;
-};
+  struct Rect
+  {
+    Point specialPoint;
+    std::vector<Point> plist;
+    uint32_t color;
+  };
 
-class Box {
-public:
-  Box() = default;
+  class Box
+  {
+  public:
+    Box() = default;
 
-  virtual ~Box() = default;
+    virtual ~Box() = default;
 
-public:
-  std::map<std::string, Rect> faces;
-  box_type Boxtype{};
-};
+  public:
+    std::map<std::string, Rect> faces;
+    box_type Boxtype{};
+  };
 
 } // namespace TestReflect
 
@@ -138,11 +169,13 @@ CHECK_TRAIT(!serialization::is_stl_array_like<std::stack<Json>>);
 static_assert(serialization::is_stl_map_like<std::map<Json, Json>>::value,
               "serialization::is_stl_map_like<std::map<Json,Json>>");
 
-inline string HexString(const string &str) {
+inline string HexString(const string &str)
+{
   std::string res;
   char elemStr[4];
   unsigned char uCElem;
-  for (size_t ii = 0; ii < str.size(); ii++) {
+  for (size_t ii = 0; ii < str.size(); ii++)
+  {
     uCElem = str.at(ii);
     sprintf(elemStr, "%02x ", uCElem);
     res.append(elemStr);
@@ -150,7 +183,8 @@ inline string HexString(const string &str) {
   return res;
 }
 
-void jsonp_test() {
+void jsonp_test()
+{
   const string simple_test =
       R"({"k1":"v1", "k2":42, "k3":["a",123,true,false,null]})";
 
@@ -160,7 +194,8 @@ void jsonp_test() {
   std::cout << "k1: " << json.at("k1").string_value() << "\n";
   std::cout << "k3: " << json.at("k3").stringify() << "\n";
 
-  for (auto &k : json.at("k3").array_items()) {
+  for (auto &k : json.at("k3").array_items())
+  {
     std::cout << "    - " << k.stringify() << "\n";
   }
 
@@ -290,7 +325,8 @@ void jsonp_test() {
     const std::string good_json = R"( {"k1" : "v1"})";
     const std::string bad_json1 = good_json + " {";
     const std::string bad_json2 = good_json + R"({"k2":"v2", "k3":[)";
-    struct TestMultiParse {
+    struct TestMultiParse
+    {
       std::string input;
       std::string::size_type expect_parser_stop_pos;
       size_t expect_not_empty_elms_count;
@@ -305,16 +341,17 @@ void jsonp_test() {
          Json(std::map<string, string>{{"k1", "v1"}})},
         {"{}", 2, 1, Json::object{}},
     };
-    for (const auto &tst : tests) {
+    for (const auto &tst : tests)
+    {
       std::string::size_type parser_stop_pos;
       std::string errmsg;
       auto res = Json::parse_multi(tst.input, parser_stop_pos, errmsg);
       TEST_ASSERT(parser_stop_pos == tst.expect_parser_stop_pos);
       TEST_ASSERT(
-          (size_t)std::count_if(res.begin(), res.end(), [](const Json &j) {
-            return !j.is_null();
-          }) == tst.expect_not_empty_elms_count);
-      if (!res.empty()) {
+          (size_t)std::count_if(res.begin(), res.end(), [](const Json &j)
+                                { return !j.is_null(); }) == tst.expect_not_empty_elms_count);
+      if (!res.empty())
+      {
         TEST_ASSERT(tst.expect_parse_res == res[0]);
       }
     }
@@ -330,7 +367,8 @@ void jsonp_test() {
   TEST_ASSERT(json_obj_str ==
               "{\"key1\": \"value1\", \"key2\": false, \"key3\": [1, 2, 3]}");
 
-  class Point {
+  class Point
+  {
   public:
     int x;
     int y;
@@ -385,7 +423,8 @@ void jsonp_test() {
   auto res = Json::parse_multi(multi_json_objs, err_msg);
   TEST_ASSERT(err_msg.empty());
   std::cout << "Multi objects:" << std::endl;
-  for (auto &i : res) {
+  for (auto &i : res)
+  {
     std::cout << "Before:" << i.stringify() << std::endl;
     i["Var1"] = 4;
     i["Var2"] = Json(Json::array{1, 2, 3});
@@ -394,8 +433,10 @@ void jsonp_test() {
   }
 }
 
-void cborp_test() {
-  auto bytes2string = [](const bytesArray &bytes) -> string {
+void cborp_test()
+{
+  auto bytes2string = [](const bytesArray &bytes) -> string
+  {
     return {(char *)bytes.data(), bytes.size()};
   };
 
@@ -474,9 +515,11 @@ void cborp_test() {
       "{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}");
 }
 
-void combo_test() {
+void combo_test()
+{
   for (const std::string &filename :
-       {"1.json", "2.json", "3.json", "4.json", "5.json", "6.json"}) {
+       {"1.json", "2.json", "3.json", "4.json", "5.json", "6.json"})
+  {
     std::ifstream ifs(std::string("../json.org/") + filename);
     string err;
     string str((std::istreambuf_iterator<char>(ifs)),
@@ -495,14 +538,18 @@ void combo_test() {
   }
 }
 
-void codec_test() {
+void codec_test()
+{
   CborStream cbs;
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     cbs << true << false;
     EXPECT_CBOREQ(cbs.GetData().c_str(), "f5 f4 ");
   }
-  PREPARE_TEST {
-    for (short i : {2, 14, 25, 56, 241, -21, -124, -5, -5116, -24901}) {
+  PREPARE_TEST
+  {
+    for (short i : {2, 14, 25, 56, 241, -21, -124, -5, -5116, -24901})
+    {
       cbs << i;
     }
     EXPECT_CBOREQ(cbs.GetData(),
@@ -510,9 +557,11 @@ void codec_test() {
     // 0x02,0x0e,0x1819,0x1838,0x18f1,0x34,0x387B,0x24,0x3913FB,0x396144
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
 
-    for (auto i : {100, 1000, 10000, 100000, -100, -100000, -87923000}) {
+    for (auto i : {100, 1000, 10000, 100000, -100, -100000, -87923000})
+    {
       cbs << i;
     }
     EXPECT_CBOREQ(cbs.GetData(), "18 64 19 03 e8 19 27 10 1a 00 01 86 a0 38 63 "
@@ -520,10 +569,12 @@ void codec_test() {
     // 0x1864,0x193e8,0x192710,0x1a0186a0,0x3863,0x3A0001869F,0x3A053D9937
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     std::vector<int64_t> vec = {3000000000, 452384728947, 17515481548154,
                                 435678399658346583, -274632784628453285};
-    for (auto i : vec) {
+    for (auto i : vec)
+    {
       cbs << i;
     }
     EXPECT_CBOREQ(cbs.GetData(),
@@ -533,9 +584,11 @@ void codec_test() {
     // 0x1AB2D05E00,0x1B00000069543B2773,0x1B00000FEE240E457A,0x1B060BD73237F24857,0x3B03CFB11003748FA4
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
 
-    for (auto i : {0.0754f, 34.12f, 7.986f, -46583.46f, -2742.85f}) {
+    for (auto i : {0.0754f, 34.12f, 7.986f, -46583.46f, -2742.85f})
+    {
       cbs << i;
     }
     EXPECT_CBOREQ(cbs.GetData(), "fa 3d 9a 6b 51 fa 42 08 7a e1 fa 40 ff 8d 50 "
@@ -543,9 +596,11 @@ void codec_test() {
     // 0xfa3d9a6b51,0xFA42087AE1,0xFA40FF8D50,0xFAC735F776,0xFAC52B6D9A
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     for (auto i : {0.000754, 34.12, 7.98646471, 4356783996583.46583,
-                   -27463278462.8453285}) {
+                   -27463278462.8453285})
+    {
       cbs << i;
     }
     EXPECT_CBOREQ(cbs.GetData(),
@@ -555,8 +610,10 @@ void codec_test() {
     // 0xFB3F48B502ABABEAD5,0xFB40410F5C28F5C28F,0xFB401FF223CE106EB8,0xFB428FB3247FF53BBA,0xFBC21993C17DFB619E
   }
 
-  PREPARE_TEST {
-    for (std::string i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""}) {
+  PREPARE_TEST
+  {
+    for (std::string i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""})
+    {
       cbs << i;
     }
     cbs << std::string("lvaue");
@@ -571,14 +628,17 @@ void codec_test() {
     // 0x656c76617565
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     std::vector<unsigned char> tp{0x80, 0x81, 0x82, 0x83, 0xFF};
     cbs << tp;
     EXPECT_CBOREQ(cbs.GetData(), "45 80 81 82 83 ff ");
   }
 
-  PREPARE_TEST {
-    for (auto i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""}) {
+  PREPARE_TEST
+  {
+    for (auto i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""})
+    {
       cbs << i;
     }
     char p[10] = "werttt";
@@ -591,7 +651,8 @@ void codec_test() {
                                  "68 69 73 64 66 65 6c 76 61 75 65 ");
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     std::array<int, 5> ls0{1, 2, 3, 4, 5};
     std::vector<int> ls1 = {1, 2, 3, 4, 5};
     cbs << ls0 << ls1;
@@ -612,7 +673,8 @@ void codec_test() {
                   "2a 26 2f 6e 44 61 62 63 64 ");
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     std::map<int, int> mp1 = {{1, 2}, {2, 2}, {3, 56}};
     // 0xA301020202031838
     std::unordered_map<std::string, std::string> mp2 = {
@@ -635,7 +697,8 @@ void codec_test() {
     cbs << pp;
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     cbs << "[1,[1,2]]"
         << "ceshi" << std::vector<double>{1.2, 2.3, 3.4};
     EXPECT_CBOREQ(cbs.GetData(),
@@ -644,14 +707,16 @@ void codec_test() {
                   "66 66 fb 40 0b 33 33 33 33 33 33 ");
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     test_encoder_stream_io sio(1, 2, 3.5, "cesiashdka");
     cbs << sio;
     EXPECT_CBOREQ(cbs.GetData(),
                   "6f 31 32 33 2e 35 63 65 73 69 61 73 68 64 6b 61 ");
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     bool t1 = false;
     bool t2 = false;
     cbs << true << false;
@@ -660,56 +725,68 @@ void codec_test() {
     EXPECT_EQ(t2, false);
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     short s = 0;
-    for (short i : {2, 14, 25, 56, 241, -21, -124, -5, -5116, -24901}) {
+    for (short i : {2, 14, 25, 56, 241, -21, -124, -5, -5116, -24901})
+    {
       cbs << i;
       cbs >> s;
       EXPECT_EQ(i, s);
     }
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     int s = 0;
-    for (auto i : {100, 1000, 10000, 100000, -100, -100000, -87923000}) {
+    for (auto i : {100, 1000, 10000, 100000, -100, -100000, -87923000})
+    {
       cbs << i;
       cbs >> s;
       EXPECT_EQ(i, s);
     }
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     int64_t s = 0;
     std::vector<int64_t> vec = {3000000000, 452384728947, 17515481548154,
                                 435678399658346583, -274632784628453285};
-    for (auto i : vec) {
+    for (auto i : vec)
+    {
       cbs << i;
       cbs >> s;
       EXPECT_EQ(i, s);
     }
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     float s = 0.0f;
-    for (auto i : {0.0754f, 34.12f, 7.986f, -46583.46f, -2742.85f}) {
+    for (auto i : {0.0754f, 34.12f, 7.986f, -46583.46f, -2742.85f})
+    {
       cbs << i;
       cbs >> s;
       EXPECT_EQ(i, s);
     }
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     double s = 0.0;
     for (auto i : {0.000754, 34.12, 7.98646471, 4356783996583.46583,
-                   -27463278462.8453285}) {
+                   -27463278462.8453285})
+    {
       cbs << i;
       cbs >> s;
       EXPECT_EQ(i, s);
     }
   }
 
-  PREPARE_TEST {
-    for (std::string i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""}) {
+  PREPARE_TEST
+  {
+    for (std::string i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""})
+    {
       cbs << i;
       std::string s;
       cbs >> s;
@@ -717,18 +794,22 @@ void codec_test() {
     }
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     std::vector<unsigned char> tp{0xFF, 0XFE, 0XFD, 0XFC, 0XFB, 0XEA};
     cbs << tp;
     std::vector<unsigned char> tp2;
     cbs >> tp2;
-    for (auto j = 0u; j < tp.size(); ++j) {
+    for (auto j = 0u; j < tp.size(); ++j)
+    {
       EXPECT_EQ(tp.at(j), tp2.at(j));
     }
   }
 
-  PREPARE_TEST {
-    for (auto i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""}) {
+  PREPARE_TEST
+  {
+    for (auto i : {"0.000754", "3ad4f12", "bhdsf", "0xashdgox", ""})
+    {
       cbs << i;
       std::string s;
       cbs >> s;
@@ -736,7 +817,8 @@ void codec_test() {
     }
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     std::vector<int> ls1 = {1, 2, 3, 4, 5};
     std::deque<std::string> qu = {"cehi", "32846de", "queudbvf",
                                   "%^45243**&/n"};
@@ -751,7 +833,8 @@ void codec_test() {
     EXPECT_EQ(qu == lqu, true);
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     std::map<int, int> mp1 = {{1, 2}, {2, 2}, {3, 56}};
     std::unordered_map<std::string, std::string> mp2 = {
         {"key", "value"}, {"jkfdh", "vfd"}, {"c876rw%^", ""}};
@@ -767,7 +850,8 @@ void codec_test() {
     mp4.emplace(1, mp1);
     mp4.emplace(-99, mp1);
     std::map<double, double> mp5, lmp5;
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 100; ++i)
+    {
       mp5.emplace(0.25 * i, 0.75 * i * i);
     }
 
@@ -781,7 +865,8 @@ void codec_test() {
     // todo: very large nint?
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     cbs << "[1,[1,2]]"
         << "ceshi" << std::vector<double>{1.2, 2.3, 3.4};
     std::string s1, s2;
@@ -790,13 +875,15 @@ void codec_test() {
     EXPECT_STRING_EQUAL(s1.c_str(), "[1,[1,2]]");
     EXPECT_STRING_EQUAL(s2.c_str(), "ceshi");
     int cnt = 0;
-    for (auto i : {1.2, 2.3, 3.4}) {
+    for (auto i : {1.2, 2.3, 3.4})
+    {
       EXPECT_EQ(i, vec[cnt]);
       ++cnt;
     }
   }
 
-  PREPARE_TEST {
+  PREPARE_TEST
+  {
     test_encoder_stream_io sio(1, 2, 3.5, "cesiashdka");
     cbs << sio;
     std::string str;
@@ -867,7 +954,8 @@ void codec_test() {
   }
 }
 
-void test_use() {
+void test_use()
+{
   using namespace serialization;
   Json j(Json::object{});
 
@@ -905,10 +993,19 @@ void test_use() {
   std::cout << j2.stringify() << std::endl;
 }
 
-int main(int, char **) {
+int main(int, char **)
+{
+  int proc = 0;
+  MAKEGUARD([&proc]()
+                     { std::cout << "exit with proc: " << proc << std::endl; });
   jsonp_test();
+  proc = 20;
   cborp_test();
+  proc = 40;
   combo_test();
+  proc = 60;
   codec_test();
+  proc = 80;
   test_use();
+  proc = 100;
 }
