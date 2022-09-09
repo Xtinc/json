@@ -537,10 +537,10 @@ namespace serialization
 
 } // namespace reclog
 
-#define __CONCATENATE(s1, s2) s1##s2
+#define __PP_CONCATENATE(s1, s2) s1##s2
 
-#define MAKEGUARD(Para) \
-    auto __CONCATENATE(Exit_Block_Guard, __LINE__) = serialization::make_guard(Para);
+#define MAKEGUARD(...) \
+    auto __PP_CONCATENATE(Exit_Block_Guard, __LINE__) = serialization::make_guard(__VA_ARGS__);
 
 #define REFLECT(Struct, ...)                                 \
     template <>                                              \
